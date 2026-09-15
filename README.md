@@ -1,75 +1,44 @@
 # GitSpec
 
-A research project on spec systems where **git is the source of truth and both humans
-and AI agents are first-class editors.**
+A spec system where git is the source of truth and both humans and AI agents are
+first-class editors. An edit becomes a branch and a pull request; merging it is what
+makes it true.
 
-Status: nothing is built yet. This README states the thesis and the open questions.
+Design only so far — no product code yet. **The design lives in [`docs/`](docs/), and
+is itself the first thing GitSpec manages.**
 
-## The problem
+## Layout
 
-Confluence, Notion and GitBook were designed in the 2010s, when every editor was a
-human. They assume edits arrive one person at a time, that review is a conversation,
-and that conflicts get resolved by people talking. Those assumptions break once a
-meaningful share of the edits come from an agent:
+This is a monorepo with two areas, kept apart so the product never has privileged
+access to the content it serves.
 
-- an agent changes twenty files in one pass — what does review look like?
-- a person edits a paragraph in a web UI while an agent rewrites the whole section on
-  a branch — how does that merge?
-- the doc says "max 4 lines", the code says 5 — **who notices?**
+| Path | What it is |
+| --- | --- |
+| [`docs/`](docs/) | Content. A GitSpec space, mapped in `gitspec.yaml`, edited under GitSpec's own rules. |
+| [`apps/`](apps/) | Product code. See [`apps/README.md`](apps/README.md) for the intended split. |
+| `gitspec.yaml` | Site configuration: which directories are spaces. |
 
-The first two are engineering problems with known shapes. The third is the interesting
-one, and it is the one that actually hurts.
+## Dogfooding
 
-## Observed failure modes
+`docs/` is not a sample. It is the real design of the product, served by the product,
+and every rule in it applies to itself:
 
-Patterns seen in production documentation sets of a few hundred specs, split between
-a repository and a wiki:
+- [Spec document format](docs/specs/spec-format.md) is written in the format it defines.
+- [Sync architecture](docs/specs/sync-architecture.md) describes the pull-request flow
+  that changes to this repository go through.
+- [Drift detection](docs/specs/drift-detection.md) will run against `apps/` once there
+  is code there, using the `governs` field of the specs in `docs/`.
 
-- A spec keeps describing behaviour that changed releases ago. Nothing flags it,
-  because nothing is watching.
-- A spec becomes untrustworthy as a whole, and has to be reconciled against the code
-  line by line, by hand, before anyone can rely on it again.
-- The most rigorous specs carry hand-maintained tables comparing intent to
-  implementation, row by row. They are accurate on the day they are written and decay
-  from then on.
+The intended consequence is that the format cannot rot unnoticed, because the people
+maintaining it are the people suffering under it.
 
-Every one of these is a *drift* problem: the spec and the artefact it describes
-diverged, and the divergence stayed invisible until someone paid to look.
+## Why not GitBook
 
-## The bet
+GitBook solves bidirectional sync by never merging: its sync unit is a whole space,
+pushed or pulled wholesale, last writer wins. That forces three things — it must be
+allowed to bypass branch protection, its change requests are disconnected from pull
+requests by design, and it writes duplicate files rather than risk overwriting one it
+did not create.
 
-Drift detection was not buildable before LLMs, which is why no existing product does
-it. That makes it the part worth owning.
-
-The minimal core:
-
-1. A change lands that touches some implementation.
-2. Find the spec that claims to describe it.
-3. Extract the spec's *checkable* statements — the ones with a truth value.
-4. Ask whether the change contradicts any of them.
-5. Say so, on the change, before it merges.
-
-This is measurable rather than vibes-based: a corpus of real specs with known-stale
-documents is a labelled evaluation set. Either the detector finds them or it does not.
-
-## Open questions
-
-**Anchoring.** Comments and annotations that survive edits to the text they point at.
-Three known approaches — block IDs embedded in the source, sidecar fuzzy anchors
-re-matched on read, or git-native comments that live on a diff. Each trades source
-cleanliness against durability. The unexplored option is semantic re-anchoring: when
-fuzzy matching fails, ask a model whether the rewritten passage is still the thing the
-comment was about.
-
-**What counts as checkable.** "The card is 312x426" is checkable. "The bar is the app's
-fixed point" is intent, and flagging it as drift would be noise. The line between them
-is not obvious and probably decides whether the tool is usable.
-
-**Authoring.** A browser editor that round-trips Markdown without mangling tables,
-diagrams and frontmatter is a solved-but-tedious problem, and off-the-shelf pieces
-exist. It is deliberately not the starting point.
-
-## Non-goals
-
-- Replacing the wiki for meeting notes and discussion. Those are not specs.
-- A general-purpose CMS. The value is in the spec-specific rules, not the editor.
+GitSpec gives the merge back to git and the review back to the platform. The reasoning
+is in [Sync architecture](docs/specs/sync-architecture.md#intent).

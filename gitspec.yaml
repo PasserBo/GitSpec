@@ -1,0 +1,28 @@
+# GitSpec site configuration.
+#
+# GitSpec reads this file from the repository root. It maps the directories in
+# this repository that hold documentation onto the spaces GitSpec serves.
+#
+# This repository is GitSpec's own first user: the spaces below are real, and the
+# product is developed against them.
+
+version: 1
+
+site:
+  title: GitSpec
+
+spaces:
+  # `key` is this space's permanent identity, and is what GitSpec matches on from
+  # one sync to the next. It is deliberately independent of `title`, `path` and
+  # `directory`, so that all three can change without the space being replaced.
+  # Renaming a key means deleting a space and creating a different one.
+  - key: gitspec-docs
+    title: GitSpec
+    path: /
+    directory: ./docs
+
+# Defaults applied to every space unless it overrides them:
+#
+#   readme:  README.md     the space's home page
+#   summary: SUMMARY.md     the space's navigation; a document absent from it is
+#                           still rendered, but is not linked from the sidebar
