@@ -1,0 +1,6 @@
+result: error
+rule: D-4
+message_must_name:
+  - shared/claimed.md
+  - space-a
+  - space-b

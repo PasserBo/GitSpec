@@ -1,0 +1,9 @@
+version: 1
+site:
+  title: Both forms
+spaces:
+  - key: both
+    title: Docs
+    path: /
+    directory: ./docs
+    include: ["src/**/spec.md"]

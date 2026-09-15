@@ -1,0 +1,4 @@
+result: error
+rule: D-6
+message_must_name:
+  - "guides/**/*.md"

@@ -1,0 +1,12 @@
+version: 1
+site:
+  title: Overlapping
+spaces:
+  - key: space-a
+    title: A
+    path: /a
+    include: ["shared/**/*.md", "a/**/*.md"]
+  - key: space-b
+    title: B
+    path: /b
+    include: ["shared/**/*.md", "b/**/*.md"]

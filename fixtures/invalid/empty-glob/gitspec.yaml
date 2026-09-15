@@ -1,0 +1,10 @@
+version: 1
+site:
+  title: Empty glob
+spaces:
+  - key: empty
+    title: Docs
+    path: /
+    include:
+      - "docs/**/*.md"
+      - "guides/**/*.md"   # the directory was renamed; nothing matches

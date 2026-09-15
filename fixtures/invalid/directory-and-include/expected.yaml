@@ -1,0 +1,4 @@
+result: error
+rule: D-2
+message_must_name:
+  - both

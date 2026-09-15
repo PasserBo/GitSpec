@@ -1,0 +1,13 @@
+version: 1
+site:
+  title: Scattered
+spaces:
+  - key: scattered-docs
+    title: Docs
+    path: /
+    include:
+      - "docs/**/*.md"
+      - "src/**/spec.md"
+      - "packages/*/README.md"
+    exclude:
+      - "**/CHANGELOG.md"

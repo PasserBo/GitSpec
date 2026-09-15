@@ -1,0 +1,6 @@
+result: error
+rule: A-3
+message_must_name:
+  - docs/first.md
+  - docs/second.md
+  - same-id

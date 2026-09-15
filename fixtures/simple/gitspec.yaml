@@ -1,0 +1,8 @@
+version: 1
+site:
+  title: Simple
+spaces:
+  - key: simple-docs
+    title: Docs
+    path: /
+    directory: ./docs

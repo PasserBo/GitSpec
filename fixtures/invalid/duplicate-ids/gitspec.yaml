@@ -1,0 +1,8 @@
+version: 1
+site:
+  title: Duplicate ids
+spaces:
+  - key: dup
+    title: Docs
+    path: /
+    directory: ./docs

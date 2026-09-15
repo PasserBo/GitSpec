@@ -1,0 +1,11 @@
+result: ok
+documents:
+  - { id: adr-0001, path: docs/adr/0001-record.md }
+  - { id: auth,     path: src/auth/spec.md }
+  - { id: billing,  path: src/billing/spec.md }
+  # A-4: no frontmatter, so the id comes from the path
+  - { id: packages-ui-readme, path: packages/ui/README.md, id_derived: true }
+excluded:
+  - { path: CHANGELOG.md,                      by: space-exclude }
+  - { path: node_modules/left-pad/README.md,   by: built-in }
+navigation: inferred   # N-2: no SUMMARY.md in this space
