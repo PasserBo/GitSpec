@@ -20,21 +20,21 @@ meaningful share of the edits come from an agent:
 The first two are engineering problems with known shapes. The third is the interesting
 one, and it is the one that actually hurts.
 
-## Observed evidence
+## Observed failure modes
 
-Drawn from a production codebase with ~485 spec documents split across a repo and a
-wiki:
+Patterns seen in production documentation sets of a few hundred specs, split between
+a repository and a wiki:
 
-- A feature spec still described a behaviour ("communities are always public") that had
-  been changed two releases earlier. Nothing flagged it.
-- One spec had to be reconciled line by line against the default branch, by hand,
-  because nobody could tell which parts were still true.
-- The most rigorous spec in the set carries a hand-maintained table comparing the
-  design to the implementation, row by row, with match / mismatch marks. It was
-  accurate on the day a person wrote it and started decaying immediately.
+- A spec keeps describing behaviour that changed releases ago. Nothing flags it,
+  because nothing is watching.
+- A spec becomes untrustworthy as a whole, and has to be reconciled against the code
+  line by line, by hand, before anyone can rely on it again.
+- The most rigorous specs carry hand-maintained tables comparing intent to
+  implementation, row by row. They are accurate on the day they are written and decay
+  from then on.
 
 Every one of these is a *drift* problem: the spec and the artefact it describes
-diverged, and the divergence was invisible until someone paid to look.
+diverged, and the divergence stayed invisible until someone paid to look.
 
 ## The bet
 
