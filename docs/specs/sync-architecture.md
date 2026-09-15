@@ -83,6 +83,9 @@ edit the same document, they are working on one pull request, and git handles th
 - **R-4** — Addresses are site-relative. A deployment may mount the site under a path
   prefix, which changes the links in the rendered output and changes no document's
   address. Where a site is served is a property of the deployment, never of the content.
+- **R-5** — The deployment prefix is a boundary. No link the renderer emits points above
+  it, including one a document wrote as site-absolute. A site built from one repository
+  reaches only that repository's content.
 
 ## Open questions
 

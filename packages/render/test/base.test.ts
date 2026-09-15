@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { discover, parseConfig } from "@gitspec/core";
-import { normalizeBase, renderSite, withBase } from "../src/index.ts";
+import { normalizeBase, renderMarkdown, renderSite, withBase } from "../src/index.ts";
 
 const FIXTURE = join(import.meta.dir, "../../../fixtures/simple");
 
@@ -65,5 +65,55 @@ describe("renderSite with a base", () => {
         const home = files.find((f) => f.path === "index.html")!;
         expect(home.contents).toContain('href="/alpha"');
         expect(home.contents).not.toContain("/GitSpec/");
+    });
+});
+
+// R-5: the prefix is a boundary. These are the ways a link escapes it if nothing stops
+// them — and on a project site "above the prefix" is a different site owned by the same
+// account, not a 404.
+describe("R-5: no emitted link escapes the prefix", () => {
+    const doc = {
+        kind: "page" as const,
+        address: "/sample",
+        id: "sample",
+        idDerived: false,
+        path: "docs/sample.md",
+        spaceKey: "s",
+        frontmatter: {},
+    };
+
+    const source = [
+        "[site-absolute](/elsewhere)",
+        "[relative unresolved](./nowhere.md)",
+        "[relative resolved](./other.md)",
+        "[external](https://example.com/x)",
+        "[mail](mailto:a@b.c)",
+        "[fragment](#section)",
+        '<a href="/raw-html-escape">raw</a>',
+        '<img src="/raw-image.png" alt="">',
+    ].join("\n\n");
+
+    const lookup = (p: string) => (p === "docs/other.md" ? "/other" : undefined);
+
+    test("site-absolute links, including inside raw HTML, are pulled under the prefix", async () => {
+        const html = await renderMarkdown(doc, source, lookup, "/GitSpec");
+        expect(html).toContain('href="/GitSpec/elsewhere"');
+        expect(html).toContain('href="/GitSpec/raw-html-escape"');
+        expect(html).toContain('src="/GitSpec/raw-image.png"');
+        expect(html).toContain('href="/GitSpec/other"');
+    });
+
+    test("external links and fragments are untouched", async () => {
+        const html = await renderMarkdown(doc, source, lookup, "/GitSpec");
+        expect(html).toContain('href="https://example.com/x"');
+        expect(html).toContain('href="mailto:a@b.c"');
+        expect(html).toContain('href="#section"');
+    });
+
+    test("nothing in the output is rooted outside the prefix", async () => {
+        const html = await renderMarkdown(doc, source, lookup, "/GitSpec");
+        const urls = [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map((m) => m[1]!);
+        const escaping = urls.filter((u) => u.startsWith("/") && !u.startsWith("/GitSpec/"));
+        expect(escaping).toEqual([]);
     });
 });
