@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+
+# Corpora and scratch output — kept out of the repo until the shape is decided
+/corpus/
+/out/
+/scratch/
