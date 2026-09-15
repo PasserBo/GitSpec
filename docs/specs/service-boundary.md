@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: service-boundary
 title: Service boundary
 status: draft

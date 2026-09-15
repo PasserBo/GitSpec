@@ -1,11 +1,14 @@
 result: ok
 documents:
-  - { id: adr-0001, path: docs/adr/0001-record.md }
-  - { id: auth,     path: src/auth/spec.md }
-  - { id: billing,  path: src/billing/spec.md }
-  # A-4: no frontmatter, so the id comes from the path
-  - { id: packages-ui-readme, path: packages/ui/README.md, id_derived: true }
+  # A-6: the home document answers at the space path, not at an id-derived address
+  - { id: scattered-home, path: docs/README.md,           kind: page, address: "/" }
+  - { id: adr-0001,       path: docs/adr/0001-record.md,  kind: spec, address: /adr-0001 }
+  - { id: auth,           path: src/auth/spec.md,         kind: spec, address: /auth }
+  - { id: billing,        path: src/billing/spec.md,      kind: spec, address: /billing }
+  # A-4: no frontmatter at all, so the id comes from the path — and F-6 makes it a page
+  - { id: packages-ui-readme, path: packages/ui/README.md, kind: page, id_derived: true,
+      address: /packages-ui-readme }
 excluded:
-  - { path: CHANGELOG.md,                      by: space-exclude }
-  - { path: node_modules/left-pad/README.md,   by: built-in }
+  - { path: CHANGELOG.md,                    by: space-exclude }
+  - { path: node_modules/left-pad/README.md, by: built-in }
 navigation: inferred   # N-2: no SUMMARY.md in this space

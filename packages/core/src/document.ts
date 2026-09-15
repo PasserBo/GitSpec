@@ -1,6 +1,13 @@
 import { parse as parseYaml } from "yaml";
+import { addressFor } from "./address.ts";
+
+export type DocumentKind = "spec" | "page";
 
 export interface Document {
+    /** F-6: `page` unless the document says otherwise. Only a `spec` is ever drift-checked (E-6). */
+    kind: DocumentKind;
+    /** Where this document answers, per A-1 and A-6. */
+    address: string;
     /** Address-bearing identity (A-1). Read from frontmatter, or derived from the path (A-4). */
     id: string;
     /** True when the id came from the path rather than from frontmatter, so A-2 does not hold for it. */
@@ -40,15 +47,26 @@ export function deriveId(path: string): string {
         .replace(/^-+|-+$/g, "");
 }
 
-export function documentFrom(path: string, spaceKey: string, source: string): Document {
-    const frontmatter = parseFrontmatter(source);
+export function documentFrom(args: {
+    path: string;
+    spaceKey: string;
+    spacePath: string;
+    source: string;
+    isHome: boolean;
+}): Document {
+    const frontmatter = parseFrontmatter(args.source);
     const declared = frontmatter.id;
     const hasDeclared = typeof declared === "string" && declared.length > 0;
+    const id = hasDeclared ? declared : deriveId(args.path);
     return {
-        id: hasDeclared ? declared : deriveId(path),
+        // F-6: anything that does not say `spec` is a page. Defaulting the other way
+        // would turn adopting a repository into a wall of format violations.
+        kind: frontmatter.kind === "spec" ? "spec" : "page",
+        address: addressFor(args.spacePath, id, args.isHome),
+        id,
         idDerived: !hasDeclared,
-        path,
-        spaceKey,
+        path: args.path,
+        spaceKey: args.spaceKey,
         frontmatter,
     };
 }

@@ -1,4 +1,5 @@
 ---
+kind: page
 id: home
 title: GitSpec
 ---

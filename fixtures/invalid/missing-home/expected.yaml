@@ -1,0 +1,5 @@
+result: error
+rule: A-7
+message_must_name:
+  - no-home
+  - docs/README.md

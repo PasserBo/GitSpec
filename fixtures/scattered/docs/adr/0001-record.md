@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: adr-0001
 title: Record an architecture decision
 status: draft

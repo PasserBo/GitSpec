@@ -1,9 +1,17 @@
 {
   "name": "gitspec",
   "private": true,
-  "workspaces": ["packages/*", "apps/*"],
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "test": "bun test",
-    "typecheck": "bun run --filter '*' typecheck"
+    "typecheck": "bun run --filter '*' typecheck",
+    "build": "bun packages/render/src/cli.ts",
+    "preview": "bun packages/render/src/serve.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2"
   }
 }

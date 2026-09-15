@@ -1,0 +1,50 @@
+name: Docs
+
+# GitSpec building GitSpec's own documentation, with the action this repository ships.
+# It is the same workflow another repository would copy, pointed at itself rather than
+# at a released tag.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build the site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./
+        id: gitspec
+        with:
+          output: _site
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  # Split from `build` so that a pull request gets the same build without the ability to
+  # publish it. R-1 of the sync-architecture spec puts merged content on the published
+  # site; a preview of an unmerged branch is a separate address, not this one.
+  deploy:
+    name: Publish to Pages
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/deploy-pages@v4
+        id: deploy

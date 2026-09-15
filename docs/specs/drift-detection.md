@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: drift-detection
 title: Drift detection
 status: draft
@@ -53,6 +54,9 @@ which one to change is the author's call, and the tool must never imply otherwis
   checker does not evaluate a claim against the whole repository, so a claim that was
   already violated before the change is not reported.
 - **E-5** — Statements outside a `Behaviour` section are never evaluated.
+- **E-6** — Only a document whose `kind` is `spec` is evaluated. A page is served and
+  never judged, so a repository adopted without editing its files is never reported
+  against.
 
 ### Reporting
 

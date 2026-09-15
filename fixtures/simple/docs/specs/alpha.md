@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: alpha
 title: Alpha
 status: draft

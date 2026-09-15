@@ -1,0 +1,8 @@
+version: 1
+site:
+  title: Missing home
+spaces:
+  - key: no-home
+    title: Docs
+    path: /
+    directory: ./docs

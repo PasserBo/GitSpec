@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: same-id
 title: Second
 status: draft

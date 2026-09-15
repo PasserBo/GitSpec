@@ -24,3 +24,4 @@
 /packages/*/node_modules/
 /apps/*/node_modules/
 *.tsbuildinfo
+/_site/

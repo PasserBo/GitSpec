@@ -3,12 +3,13 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 import { discover, DiscoveryError, parseConfig } from "../src/index.ts";
+import type { DocumentKind } from "../src/index.ts";
 
 const FIXTURES = join(import.meta.dir, "../../../fixtures");
 
 interface ExpectedOk {
     result: "ok";
-    documents: { id: string; path: string; id_derived?: boolean }[];
+    documents: { id: string; path: string; id_derived?: boolean; kind?: DocumentKind; address?: string }[];
     excluded?: { path: string; by: string }[];
     navigation?: "from-summary" | "inferred";
     summary_path?: string;
@@ -45,7 +46,7 @@ const roots = await fixtureRoots();
 // The fixture set is the reason to trust any of this; an empty one would make every
 // assertion below vacuously pass.
 test("fixtures are present", () => {
-    expect(roots.length).toBeGreaterThanOrEqual(6);
+    expect(roots.length).toBeGreaterThanOrEqual(7);
 });
 
 describe.each(roots)("%s", (name) => {
@@ -87,6 +88,10 @@ describe.each(roots)("%s", (name) => {
             expect(got, `no document discovered at ${want.path}`).toBeDefined();
             expect(got!.id).toBe(want.id);
             expect(got!.idDerived).toBe(want.id_derived === true);
+            if (want.kind) expect(got!.kind).toBe(want.kind);
+            // A-6 is the rule most likely to be got wrong twice: once in core and once
+            // again by anything that renders links, so the address is pinned here.
+            if (want.address) expect(got!.address).toBe(want.address);
         }
 
         for (const { path } of expected.excluded ?? []) {

@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: auth
 title: Authentication
 status: draft

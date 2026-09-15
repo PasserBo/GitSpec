@@ -1,6 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import picomatch from "picomatch";
+import { defaultHomeFor, normalizeSpacePath } from "./address.ts";
 import { BUILT_IN_EXCLUDE_DIRS, includeGlobsFor, type Config, type SpaceConfig } from "./config.ts";
 import { documentFrom, type Document } from "./document.ts";
 import { DiscoveryError } from "./errors.ts";
@@ -12,6 +13,8 @@ export interface SpaceResult {
     path: string;
     documents: Document[];
     navigation: Navigation;
+    /** Repository-root-relative path of the document answering at `path` (A-5, A-6). */
+    homePath: string;
 }
 
 export interface DiscoveryResult {
@@ -101,11 +104,36 @@ export async function discover(root: string, config: Config): Promise<DiscoveryR
         const paths = selections.get(space.key)!;
         const summaryPath = summaryPathFor(space);
 
+        // A-7: a space that cannot answer at its own path is misconfigured, not merely
+        // missing a page. Reported before anything is rendered, naming the space and
+        // what was looked for, since the default is implicit and easy to miss.
+        const homePath = defaultHomeFor(space);
+        if (!homePath) {
+            throw new DiscoveryError(
+                "A-7",
+                `space \`${space.key}\` names no \`home\`, and defines its content with \`include\`, which implies no default`,
+            );
+        }
+        if (!paths.includes(homePath)) {
+            throw new DiscoveryError(
+                "A-7",
+                `space \`${space.key}\`: home document \`${homePath}\` is not among the files the space selects`,
+            );
+        }
+
         const documents: Document[] = [];
         for (const path of paths) {
             if (path === summaryPath) continue; // the navigation file is not itself a page
             const source = await readFile(join(root, path), "utf8");
-            documents.push(documentFrom(path, space.key, source));
+            documents.push(
+                documentFrom({
+                    path,
+                    spaceKey: space.key,
+                    spacePath: space.path,
+                    source,
+                    isHome: path === homePath,
+                }),
+            );
         }
 
         // A-3: two documents cannot share an address. Reported with both paths, because
@@ -125,15 +153,22 @@ export async function discover(root: string, config: Config): Promise<DiscoveryR
         let navigation: Navigation = { source: "inferred" };
         if (summaryPath && files.includes(summaryPath)) {
             const source = await readFile(join(root, summaryPath), "utf8");
-            navigation = { source: "summary", summaryPath, targets: parseSummary(summaryPath, source) };
+            const entries = parseSummary(summaryPath, source);
+            navigation = {
+                source: "summary",
+                summaryPath,
+                entries,
+                targets: entries.map((e) => e.target),
+            };
         }
 
         spaces.push({
             key: space.key,
             title: space.title,
-            path: space.path,
+            path: normalizeSpacePath(space.path),
             documents,
             navigation,
+            homePath,
         });
     }
 

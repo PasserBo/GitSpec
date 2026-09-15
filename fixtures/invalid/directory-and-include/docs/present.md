@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: present
 title: Present
 status: draft

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "gitspec-preview",
+      "runtimeExecutable": "bun",
+      "runtimeArgs": ["packages/render/src/serve.ts", "--port", "4321"],
+      "port": 4321
+    }
+  ]
+}

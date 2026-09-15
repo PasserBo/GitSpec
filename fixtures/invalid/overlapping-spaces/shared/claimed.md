@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: claimed
 title: Claimed by both
 status: draft

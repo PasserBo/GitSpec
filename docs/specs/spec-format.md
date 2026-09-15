@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: spec-format
 title: Spec document format
 status: draft
@@ -36,9 +37,12 @@ value against code, and flagging it would train people to ignore the tool.
 
 ### Frontmatter
 
-- **F-1** — Every spec begins with YAML frontmatter containing `id`, `title`, `status`,
-  `owner`, `created`, `updated`, `governs` and `verified_against`. Missing or unknown
-  keys are an error.
+- **F-1** — Every spec begins with YAML frontmatter containing `kind`, `id`, `title`,
+  `status`, `owner`, `created`, `updated`, `governs` and `verified_against`. Missing or
+  unknown keys are an error.
+- **F-6** — `kind` is `spec` or `page`, and is `page` when absent. Every rule in this
+  document applies only to a document whose `kind` is `spec`; a `page` is subject to
+  none of them beyond having an `id`.
 - **F-2** — `id` is unique across the repository and is independent of the file path,
   so a spec can be moved without breaking references to it.
 - **F-3** — `status` is one of `draft`, `active`, or `superseded`. Only `active` specs
@@ -90,8 +94,10 @@ then C-2 fails, because editing a claim's wording would change its identifier.
 the whole point of the field. But if the drift checker passes cleanly over a spec, that
 is evidence too, and leaving the field permanently `null` makes it useless.
 
-**Nothing says which documents this format applies to.** F-1 opens with "every spec",
-and no rule anywhere defines what makes a document a spec rather than an ordinary page.
-Discovery found this by serving `docs/README.md`, which is a real document, is not a
-spec, and satisfies none of S-1. Either the format applies to a marked subset and the
-marker needs specifying, or plain pages are a second document kind that no spec covers.
+**`kind` defaults to the unchecked value.** F-6 makes `page` the default so that
+pointing GitSpec at an existing repository yields a site rather than a list of format
+violations. The cost is that a document intended as a spec, written correctly but
+missing its `kind`, is silently treated as prose: it is served, it looks right, and
+nothing ever checks it. The failure is invisible in exactly the way this project exists
+to prevent, and the alternative — defaulting to `spec` — is worse only because it makes
+adoption loud rather than quiet.

@@ -1,0 +1,46 @@
+name: GitSpec
+description: Build a documentation site from a repository's gitspec.yaml
+
+# Runs entirely in the caller's own CI, per B-1 of the service-boundary spec: no
+# GitSpec-operated service is contacted, and nothing here needs a credential. A private
+# repository can use this without its content leaving the account that owns it.
+
+inputs:
+  root:
+    description: Repository directory to discover from.
+    required: false
+    default: "."
+  config:
+    description: Site configuration file, relative to `root`.
+    required: false
+    default: gitspec.yaml
+  output:
+    description: Directory to write the rendered site into. Replaced on every run.
+    required: false
+    default: _site
+
+outputs:
+  path:
+    description: Directory the site was written to.
+    value: ${{ inputs.output }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
+      with:
+        bun-version: "1.3.9"
+
+    - name: Install GitSpec dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: bun install --frozen-lockfile
+
+    - name: Build the site
+      shell: bash
+      run: |
+        bun "${{ github.action_path }}/packages/render/src/cli.ts" \
+          --root "${{ inputs.root }}" \
+          --config "${{ inputs.config }}" \
+          --out "${{ inputs.output }}"

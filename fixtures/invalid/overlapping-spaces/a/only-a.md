@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: only-a
 title: Only A
 status: draft

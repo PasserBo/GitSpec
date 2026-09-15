@@ -1,8 +1,9 @@
 # D-2: `directory` expands to include ["docs/**/*.md"]
 result: ok
 documents:
-  - { id: simple-home, path: docs/README.md }
-  - { id: alpha,       path: docs/specs/alpha.md }
+  # A-5: `directory` implies docs/README.md; A-6 addresses it at the space path
+  - { id: simple-home, path: docs/README.md,       kind: spec, address: "/" }
+  - { id: alpha,       path: docs/specs/alpha.md,  kind: spec, address: /alpha }
 # N-5: a `directory` space takes its navigation from <directory>/SUMMARY.md
 # N-1: its entries are relative to the SUMMARY.md file itself
 navigation: from-summary

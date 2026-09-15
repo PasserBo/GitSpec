@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: billing
 title: Billing
 status: draft

@@ -16,7 +16,7 @@ Two constraints on the split, both from the spec rather than from taste:
 - Nothing in the reading path may write, per **R-3**, so rendering must not depend on
   anything only the server can do.
 
-A `packages/` directory appears when two apps need the same code — parsing
-`gitspec.yaml`, resolving `SUMMARY.md`, and the document model are the likely first
-candidates, since the drift checker will need all three and it is neither of these
-apps.
+Those first candidates for shared code have since landed in `packages/`:
+`@gitspec/core` (configuration, discovery, addressing) and `@gitspec/render`
+(Markdown to HTML, navigation, the static build behind `action.yml`). Both are
+consumed by the Action today and will be consumed by `web` and `server` unchanged.

@@ -11,3 +11,5 @@ spaces:
       - "packages/*/README.md"
     exclude:
       - "**/CHANGELOG.md"
+    # A-5: an `include` space implies no home, so it names one.
+    home: docs/README.md

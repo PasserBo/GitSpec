@@ -11,6 +11,8 @@ export interface SpaceConfig {
     exclude?: string[];
     /** Navigation file for a glob-defined space, which has no implied location (N-5). */
     summary?: string;
+    /** The document answering at the space's own `path` (A-5). Defaults to `<directory>/README.md`. */
+    home?: string;
 }
 
 export interface Config {
@@ -75,6 +77,7 @@ export function parseConfig(source: string): Config {
             include: s.include as string[] | undefined,
             exclude: (s.exclude as string[] | undefined) ?? [],
             summary: s.summary as string | undefined,
+            home: s.home as string | undefined,
         };
     });
 

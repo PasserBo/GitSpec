@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: content-discovery
 title: Content discovery
 status: draft
@@ -63,6 +64,14 @@ a glob. Those cases fail loudly instead.
 - **A-4** — A matched file with no `id` in its frontmatter is assigned one derived from
   its path, and is served. Adopting a repository never requires editing its files
   first.
+- **A-5** — A space designates one of its documents as its home with `home`. A space
+  declaring `directory` defaults to `README.md` inside that directory; a space declaring
+  `include` has no default, for the same reason as **N-5**.
+- **A-6** — The home document is addressed at the space's `path`, and is not also served
+  at an id-derived address. Its `id` remains its identity for references.
+- **A-7** — A space whose home document cannot be resolved is an error, naming the
+  space. A space that cannot answer at its own path is a configuration mistake, not a
+  site with one missing page.
 
 ### Navigation
 
@@ -106,7 +115,7 @@ on it is not.
 documents. Nothing here says what happens at ten thousand, and D-5's single-ref read
 implies loading the whole set to build anything.
 
-**A-1 has nothing to say about the space root.** Every document's address comes from its
-`id`, which leaves no way for one of them to answer at the space's own `path`. A space
-has a home page — `structure.readme` in every comparable system — and under these rules
-it is addressed like any other document, so the space root resolves to nothing.
+**A-6 gives the home document an address its `id` does not predict.** Everything else
+resolves by one rule, and the front door resolves by another. A link written to the home
+document's id has to be rewritten to the space path at render time, so any consumer of
+these documents that does not know about A-6 will produce a link that 404s.

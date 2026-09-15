@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: simple-home
 title: Home
 status: draft

@@ -1,4 +1,5 @@
 ---
+kind: spec
 id: sync-architecture
 title: Sync architecture
 status: draft
