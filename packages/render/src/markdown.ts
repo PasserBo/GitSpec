@@ -6,6 +6,7 @@ import remarkRehype from "remark-rehype";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
 import type { Document } from "@gitspec/core";
+import { withBase } from "./base.ts";
 
 /** Repository-root-relative path → the address that document answers at. */
 export type AddressLookup = (repoPath: string) => string | undefined;
@@ -23,8 +24,8 @@ function isExternal(href: string): boolean {
  * A link that resolves to no known document is left exactly as written. Rewriting it to
  * a guess would produce a URL that looks deliberate and 404s.
  */
-function rewriteLinks(fromPath: string, lookup: AddressLookup) {
-    const base = posix.dirname(fromPath);
+function rewriteLinks(fromPath: string, lookup: AddressLookup, base: string) {
+    const dir = posix.dirname(fromPath);
     return () => (tree: unknown) => {
         visit(tree as never, "link", (node: { url?: string }) => {
             const url = node.url;
@@ -33,11 +34,12 @@ function rewriteLinks(fromPath: string, lookup: AddressLookup) {
             const [pathPart = "", hash] = url.split("#");
             if (!pathPart) return; // a bare fragment stays put
 
-            const target = posix.normalize(base === "." ? pathPart : posix.join(base, pathPart));
+            const target = posix.normalize(dir === "." ? pathPart : posix.join(dir, pathPart));
             const address = lookup(target);
             if (!address) return;
 
-            node.url = hash ? `${address}#${hash}` : address;
+            const href = withBase(base, address);
+            node.url = hash ? `${href}#${hash}` : href;
         });
     };
 }
@@ -48,9 +50,10 @@ export async function renderMarkdown(
     document: Document,
     source: string,
     lookup: AddressLookup,
+    base = "",
 ): Promise<string> {
     const file = await BASE()
-        .use(rewriteLinks(document.path, lookup))
+        .use(rewriteLinks(document.path, lookup, base))
         // Raw HTML in a source document is passed through rather than escaped: these are
         // repositories whose Markdown predates GitSpec, and dropping their HTML would
         // silently change what the file says.

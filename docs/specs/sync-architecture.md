@@ -80,6 +80,9 @@ edit the same document, they are working on one pull request, and git handles th
   branch's content.
 - **R-3** — Rendering is read-only. Nothing in the reading path writes to the
   repository.
+- **R-4** — Addresses are site-relative. A deployment may mount the site under a path
+  prefix, which changes the links in the rendered output and changes no document's
+  address. Where a site is served is a property of the deployment, never of the content.
 
 ## Open questions
 

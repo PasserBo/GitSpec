@@ -18,6 +18,13 @@ inputs:
     description: Directory to write the rendered site into. Replaced on every run.
     required: false
     default: _site
+  base:
+    description: >-
+      Path the site is served under. A GitHub Pages project site lives at
+      /<repository>, so set it to that; a user site or a custom domain serves from the
+      root and needs nothing here. Affects the links in the output, not the file layout.
+    required: false
+    default: ""
 
 outputs:
   path:
@@ -43,4 +50,5 @@ runs:
         bun "${{ github.action_path }}/packages/render/src/cli.ts" \
           --root "${{ inputs.root }}" \
           --config "${{ inputs.config }}" \
-          --out "${{ inputs.output }}"
+          --out "${{ inputs.output }}" \
+          --base "${{ inputs.base }}"

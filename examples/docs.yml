@@ -21,6 +21,10 @@ jobs:
       - uses: PasserBo/GitSpec@main
         with:
           output: _site
+          # A GitHub Pages *project* site is served at https://<user>.github.io/<repo>/,
+          # so links need that prefix. Delete this line if you publish to a user site
+          # (<user>.github.io) or to a custom domain, which both serve from the root.
+          base: /${{ github.event.repository.name }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site

@@ -23,7 +23,7 @@ const port = Number(flag("port", "4321"));
 async function build(): Promise<Map<string, string>> {
     const config = parseConfig(await readFile(configPath, "utf8"));
     const discovery = await discover(root, config);
-    const files = await renderSite(root, config, discovery);
+    const files = await renderSite(root, config, discovery, { base: flag("base", "") });
     return new Map(files.map((file) => [`/${file.path}`, file.contents]));
 }
 

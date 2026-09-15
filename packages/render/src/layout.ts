@@ -1,4 +1,5 @@
 import type { Document, SpaceResult } from "@gitspec/core";
+import { withBase } from "./base.ts";
 
 export interface NavItem {
     title: string;
@@ -21,7 +22,7 @@ function escape(text: string): string {
  * path order with no grouping, because a space spanning unrelated trees has no ordering
  * to infer and pretending otherwise would put `src/` above `docs/` for no stated reason.
  */
-export function buildNav(space: SpaceResult, current: Document): NavItem[] {
+export function buildNav(space: SpaceResult, current: Document, base = ""): NavItem[] {
     const byPath = new Map(space.documents.map((doc) => [doc.path, doc]));
 
     if (space.navigation.source === "summary") {
@@ -31,7 +32,7 @@ export function buildNav(space: SpaceResult, current: Document): NavItem[] {
             if (!doc) continue; // N-3: a SUMMARY entry pointing outside the space is not a page
             items.push({
                 title: entry.title || String(doc.frontmatter.title ?? doc.id),
-                href: doc.address,
+                href: withBase(base, doc.address),
                 depth: entry.depth,
                 group: entry.group,
                 current: doc.path === current.path,
@@ -44,7 +45,7 @@ export function buildNav(space: SpaceResult, current: Document): NavItem[] {
 
     return space.documents.map((doc) => ({
         title: String(doc.frontmatter.title ?? doc.id),
-        href: doc.address,
+        href: withBase(base, doc.address),
         depth: 0,
         current: doc.path === current.path,
     }));
@@ -102,8 +103,9 @@ export function renderPage(args: {
     document: Document;
     nav: NavItem[];
     content: string;
+    base?: string;
 }): string {
-    const { siteTitle, space, document, nav, content } = args;
+    const { siteTitle, space, document, nav, content, base = "" } = args;
     const title = String(document.frontmatter.title ?? document.id);
     const status = document.frontmatter.status;
 
@@ -122,7 +124,7 @@ export function renderPage(args: {
 <style>${STYLE}</style>
 <div class="shell">
 <nav>
-<a class="site" href="${escape(space.path)}">${escape(siteTitle)}</a>
+<a class="site" href="${escape(withBase(base, space.path))}">${escape(siteTitle)}</a>
 ${renderNav(nav)}
 </nav>
 <main>

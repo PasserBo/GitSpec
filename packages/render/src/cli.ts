@@ -16,7 +16,7 @@ const outDir = resolve(flag("out", "_site"));
 try {
     const config = parseConfig(await readFile(configPath, "utf8"));
     const discovery = await discover(root, config);
-    const files = await renderSite(root, config, discovery);
+    const files = await renderSite(root, config, discovery, { base: flag("base", "") });
 
     // Removed rather than merged: a stale page from a document that has since been
     // deleted would otherwise stay published, which is the failure this whole project

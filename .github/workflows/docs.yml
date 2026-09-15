@@ -27,6 +27,9 @@ jobs:
         id: gitspec
         with:
           output: _site
+          # This repository publishes to a GitHub Pages project site, served at
+          # /GitSpec. Without this every link resolves against the domain root and 404s.
+          base: /${{ github.event.repository.name }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
