@@ -1,6 +1,6 @@
 # Summary
 
-* [GitSpec](README.md)
+* [Overview](README.md)
 
 ## Specs
 
