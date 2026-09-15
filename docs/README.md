@@ -1,3 +1,8 @@
+---
+id: home
+title: GitSpec
+---
+
 # GitSpec
 
 A spec system where **git is the source of truth and both humans and AI agents are

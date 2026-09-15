@@ -89,3 +89,9 @@ then C-2 fails, because editing a claim's wording would change its identifier.
 **Whether `verified_against` can be set automatically.** A human confirming the spec is
 the whole point of the field. But if the drift checker passes cleanly over a spec, that
 is evidence too, and leaving the field permanently `null` makes it useless.
+
+**Nothing says which documents this format applies to.** F-1 opens with "every spec",
+and no rule anywhere defines what makes a document a spec rather than an ordinary page.
+Discovery found this by serving `docs/README.md`, which is a real document, is not a
+spec, and satisfies none of S-1. Either the format applies to a marked subset and the
+marker needs specifying, or plain pages are a second document kind that no spec covers.

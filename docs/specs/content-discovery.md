@@ -66,14 +66,18 @@ a glob. Those cases fail loudly instead.
 
 ### Navigation
 
-- **N-1** — When a space has a `SUMMARY.md`, that file defines the navigation tree, and
-  its entries are repository-root-relative paths.
+- **N-1** — When a space has a `SUMMARY.md`, that file defines the navigation tree. Its
+  entries are paths relative to the `SUMMARY.md` file's own location, so that they
+  still resolve when the file is read in the repository rather than through GitSpec.
 - **N-2** — When a space has no `SUMMARY.md`, navigation is inferred from the paths of
   its documents.
 - **N-3** — A document absent from `SUMMARY.md` is still served at its address. It is
   absent from the navigation tree, not from the site.
 - **N-4** — GitSpec never writes `SUMMARY.md`. A navigation file is authored, like any
   other document.
+- **N-5** — A space declaring `directory` takes its navigation file from `SUMMARY.md`
+  inside that directory. A space declaring `include` has no implied location and must
+  name one with `summary`; without it the space has no navigation file.
 
 ## Open questions
 
@@ -101,3 +105,8 @@ on it is not.
 **Scale is untested.** These rules are written against repositories with hundreds of
 documents. Nothing here says what happens at ten thousand, and D-5's single-ref read
 implies loading the whole set to build anything.
+
+**A-1 has nothing to say about the space root.** Every document's address comes from its
+`id`, which leaves no way for one of them to answer at the space's own `path`. A space
+has a home page — `structure.readme` in every comparable system — and under these rules
+it is addressed like any other document, so the space root resolves to nothing.

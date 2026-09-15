@@ -1,0 +1,9 @@
+{
+  "name": "gitspec",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "bun run --filter '*' typecheck"
+  }
+}

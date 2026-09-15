@@ -15,3 +15,12 @@
 /corpus/
 /out/
 /scratch/
+
+# Dependencies and build output. Anchored rather than global: fixtures/scattered
+# commits a node_modules/ on purpose, and a bare `node_modules/` rule would swallow
+# it on a fresh clone. Git cannot re-include a path whose parent directory is ignored,
+# so a negation would not rescue it.
+/node_modules/
+/packages/*/node_modules/
+/apps/*/node_modules/
+*.tsbuildinfo

@@ -1,4 +1,4 @@
 # Summary
 
-* [Home](docs/README.md)
-* [Alpha](docs/specs/alpha.md)
+* [Home](README.md)
+* [Alpha](specs/alpha.md)

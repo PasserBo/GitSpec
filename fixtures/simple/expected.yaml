@@ -3,4 +3,10 @@ result: ok
 documents:
   - { id: simple-home, path: docs/README.md }
   - { id: alpha,       path: docs/specs/alpha.md }
+# N-5: a `directory` space takes its navigation from <directory>/SUMMARY.md
+# N-1: its entries are relative to the SUMMARY.md file itself
 navigation: from-summary
+summary_path: docs/SUMMARY.md
+navigation_targets:
+  - docs/README.md
+  - docs/specs/alpha.md

@@ -1,0 +1,21 @@
+{
+  "name": "@gitspec/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "picomatch": "^4.0.2",
+    "yaml": "^2.7.0"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "@types/picomatch": "^4.0.0"
+  }
+}
