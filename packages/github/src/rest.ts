@@ -35,6 +35,21 @@ export function restRepo(options: RestRepoOptions): RepoApi {
     async function expectOk(response: Response, what: string): Promise<unknown> {
         if (response.ok) return response.json();
         const detail = await response.text().catch(() => "");
+
+        // GitHub answers a missing app permission with "Resource not accessible by
+        // integration", which names neither the permission nor the app. Every adopter
+        // meets this once, and the raw message sends them looking in the wrong place —
+        // usually at their own account's access rather than at the app's grant.
+        if (response.status === 403 && detail.includes("not accessible by integration")) {
+            throw new SubmitError(
+                "E-4",
+                `${what} was refused: the GitHub App lacks write access to this repository. ` +
+                    `Set Contents and Pull requests to "Read and write" in the app's permissions, ` +
+                    `then accept the updated permissions on the installation — a change to an app's ` +
+                    `permissions does not reach an existing installation until it is approved.`,
+            );
+        }
+
         throw new SubmitError("C-2", `${what} failed (${response.status}): ${detail.slice(0, 400)}`);
     }
 
