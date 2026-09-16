@@ -1,0 +1,129 @@
+import { SubmitError } from "./errors.ts";
+import type { FileContent, PullRef, PutFileArgs, RepoApi } from "./repo.ts";
+
+export interface RestRepoOptions {
+    owner: string;
+    repo: string;
+    /**
+     * A token belonging to the signed-in person. Every write below is attributed to
+     * whoever it belongs to, which is E-4: an edit is never a bot's.
+     */
+    token: string;
+    apiBase?: string;
+    fetch?: typeof globalThis.fetch;
+}
+
+/** GitHub's REST API, reached directly from wherever the token already is. */
+export function restRepo(options: RestRepoOptions): RepoApi {
+    const api = options.apiBase ?? "https://api.github.com";
+    const doFetch = options.fetch ?? globalThis.fetch;
+    const root = `${api}/repos/${options.owner}/${options.repo}`;
+
+    async function call(method: string, path: string, body?: unknown): Promise<Response> {
+        return doFetch(`${root}${path}`, {
+            method,
+            headers: {
+                accept: "application/vnd.github+json",
+                authorization: `Bearer ${options.token}`,
+                "x-github-api-version": "2022-11-28",
+                ...(body ? { "content-type": "application/json" } : {}),
+            },
+            ...(body ? { body: JSON.stringify(body) } : {}),
+        });
+    }
+
+    async function expectOk(response: Response, what: string): Promise<unknown> {
+        if (response.ok) return response.json();
+        const detail = await response.text().catch(() => "");
+        throw new SubmitError("C-2", `${what} failed (${response.status}): ${detail.slice(0, 400)}`);
+    }
+
+    return {
+        async getBranchSha(branch) {
+            const response = await call("GET", `/git/ref/heads/${encodeURIComponent(branch)}`);
+            if (response.status === 404) return undefined;
+            const data = (await expectOk(response, `reading branch \`${branch}\``)) as {
+                object: { sha: string };
+            };
+            return data.object.sha;
+        },
+
+        async createBranch(branch, fromSha) {
+            const response = await call("POST", "/git/refs", {
+                ref: `refs/heads/${branch}`,
+                sha: fromSha,
+            });
+            await expectOk(response, `creating branch \`${branch}\``);
+        },
+
+        async getFile(path, ref): Promise<FileContent | undefined> {
+            const response = await call(
+                "GET",
+                `/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(ref)}`,
+            );
+            if (response.status === 404) return undefined;
+            const data = (await expectOk(response, `reading \`${path}\``)) as {
+                sha: string;
+                content?: string;
+                encoding?: string;
+            };
+            const text =
+                data.encoding === "base64" && data.content
+                    ? new TextDecoder().decode(
+                          Uint8Array.from(atob(data.content.replace(/\n/g, "")), (c) => c.charCodeAt(0)),
+                      )
+                    : "";
+            return { sha: data.sha, text };
+        },
+
+        async putFile(args: PutFileArgs) {
+            const encoded = btoa(
+                String.fromCharCode(...new TextEncoder().encode(args.contents)),
+            );
+            const response = await call(
+                "PUT",
+                `/contents/${args.path.split("/").map(encodeURIComponent).join("/")}`,
+                {
+                    message: args.message,
+                    content: encoded,
+                    branch: args.branch,
+                    ...(args.sha ? { sha: args.sha } : {}),
+                },
+            );
+
+            // C-2: a 409 means the branch moved between the read and the write. The edit
+            // is reported and left alone — retrying with force is the one repair this
+            // design refuses to make.
+            if (response.status === 409) {
+                throw new SubmitError(
+                    "C-2",
+                    `\`${args.branch}\` moved while the edit was being written; nothing was committed`,
+                );
+            }
+            await expectOk(response, `writing \`${args.path}\``);
+        },
+
+        async findOpenPull(headBranch): Promise<PullRef | undefined> {
+            const head = `${options.owner}:${headBranch}`;
+            const response = await call(
+                "GET",
+                `/pulls?state=open&head=${encodeURIComponent(head)}&per_page=1`,
+            );
+            const data = (await expectOk(response, `looking for a pull request on \`${headBranch}\``)) as {
+                number: number;
+                html_url: string;
+            }[];
+            const first = data[0];
+            return first ? { number: first.number, url: first.html_url } : undefined;
+        },
+
+        async createPull(args): Promise<PullRef> {
+            const response = await call("POST", "/pulls", args);
+            const data = (await expectOk(response, "opening a pull request")) as {
+                number: number;
+                html_url: string;
+            };
+            return { number: data.number, url: data.html_url };
+        },
+    };
+}

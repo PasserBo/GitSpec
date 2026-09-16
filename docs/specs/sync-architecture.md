@@ -5,8 +5,10 @@ title: Sync architecture
 status: draft
 owner: "@PasserBo"
 created: 2026-09-15
-updated: 2026-09-15
-governs: []
+updated: 2026-09-16
+governs:
+  - packages/github/**
+  - packages/render/**
 verified_against: null
 ---
 
