@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { branchNameFor, SubmitError, submitEdit, type RepoApi } from "../src/index.ts";
+import { branchNameFor, restRepo, SubmitError, submitEdit, type RepoApi } from "../src/index.ts";
 
 /**
  * An in-memory repository. Records every write so a test can assert not only what
@@ -176,5 +176,42 @@ describe("E-5: an agent's edit is marked, not re-attributed", () => {
         await submitEdit(repo, edit({ trailers: { "GitSpec-Agent": "claude" } }));
 
         expect(repo.commits[0]!.message).toContain("GitSpec-Agent: claude");
+    });
+});
+
+describe("a missing app permission explains itself", () => {
+    // GitHub's own words are "Resource not accessible by integration", which names
+    // neither the permission nor the app, and sends people to look at their own account
+    // access rather than at the app's grant.
+    test("a 403 from the integration is translated into what to change", async () => {
+        const repo = restRepo({
+            owner: "o",
+            repo: "r",
+            token: "t",
+            fetch: (async () =>
+                new Response(JSON.stringify({ message: "Resource not accessible by integration" }), {
+                    status: 403,
+                })) as unknown as typeof fetch,
+        });
+
+        const error = (await repo.createBranch("gitspec/x", "sha").catch((e) => e)) as SubmitError;
+        expect(error).toBeInstanceOf(SubmitError);
+        expect(error.message).toContain("Read and write");
+        expect(error.message).toContain("accept the updated permissions");
+    });
+
+    test("an unrelated failure keeps GitHub's own message", async () => {
+        const repo = restRepo({
+            owner: "o",
+            repo: "r",
+            token: "t",
+            fetch: (async () =>
+                new Response(JSON.stringify({ message: "Reference already exists" }), {
+                    status: 422,
+                })) as unknown as typeof fetch,
+        });
+
+        const error = (await repo.createBranch("gitspec/x", "sha").catch((e) => e)) as SubmitError;
+        expect(error.message).toContain("Reference already exists");
     });
 });
