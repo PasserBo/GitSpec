@@ -60,14 +60,19 @@ async function exchange(
     params: Record<string, string>,
     fetchImpl: typeof fetch,
 ): Promise<{ status: number; body: unknown }> {
+    // Form-encoded, which is what GitHub's own examples use and what every OAuth token
+    // endpoint accepts. A JSON body leaves whether the credentials were read at all
+    // indistinguishable from their being wrong, since both answer the same way.
+    const form = new URLSearchParams({
+        client_id: env.GITHUB_CLIENT_ID,
+        client_secret: env.GITHUB_CLIENT_SECRET,
+        ...params,
+    });
+
     const response = await fetchImpl(GITHUB_TOKEN_URL, {
         method: "POST",
-        headers: { accept: "application/json", "content-type": "application/json" },
-        body: JSON.stringify({
-            client_id: env.GITHUB_CLIENT_ID,
-            client_secret: env.GITHUB_CLIENT_SECRET,
-            ...params,
-        }),
+        headers: { accept: "application/json", "content-type": "application/x-www-form-urlencoded" },
+        body: form.toString(),
     });
 
     const body = (await response.json().catch(() => ({ error: "unparseable_response" }))) as Record<
@@ -112,7 +117,7 @@ export async function handleBroker(
     if (url.pathname.endsWith("/token")) {
         const code = payload.code;
         if (typeof code !== "string" || !code) return json({ error: "missing_code" }, 400, cors);
-        const result = await exchange(env, { code, grant_type: "authorization_code" }, fetchImpl);
+        const result = await exchange(env, { code }, fetchImpl);
         return json(result.body, result.status, cors);
     }
 
