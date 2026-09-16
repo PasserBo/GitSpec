@@ -2,11 +2,25 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { discover, DiscoveryError, parseConfig } from "@gitspec/core";
+import { buildEditorBundle } from "./bundle.ts";
 import { renderSite } from "./site.ts";
 
 function flag(name: string, fallback: string): string {
     const index = process.argv.indexOf(`--${name}`);
     return index !== -1 ? (process.argv[index + 1] ?? fallback) : fallback;
+}
+
+/** Repository details, from `gitspec.yaml` unless the caller overrides them. */
+function repositoryFrom(config: { repository?: { owner: string; name: string; branch: string } }) {
+    const flagged = flag("repository", "");
+    const branch = flag("branch", "");
+    if (flagged) {
+        const [owner, name] = flagged.split("/");
+        if (!owner || !name) throw new Error(`--repository expects owner/name, got \`${flagged}\``);
+        return { owner, name, branch: branch || config.repository?.branch || "main" };
+    }
+    if (!config.repository) return undefined;
+    return branch ? { ...config.repository, branch } : config.repository;
 }
 
 const root = resolve(flag("root", "."));
@@ -16,7 +30,12 @@ const outDir = resolve(flag("out", "_site"));
 try {
     const config = parseConfig(await readFile(configPath, "utf8"));
     const discovery = await discover(root, config);
-    const files = await renderSite(root, config, discovery, { base: flag("base", "") });
+    const repository = repositoryFrom(config);
+    const files = await renderSite(root, config, discovery, {
+        base: flag("base", ""),
+        repository,
+        editorBundle: repository ? await buildEditorBundle() : undefined,
+    });
 
     // Removed rather than merged: a stale page from a document that has since been
     // deleted would otherwise stay published, which is the failure this whole project

@@ -11,6 +11,13 @@ version: 1
 site:
   title: GitSpec
 
+# Where edits from the editor are proposed. Absent means the site is read-only, which
+# is the default: a site is useful before anyone can write to it.
+repository:
+  owner: PasserBo
+  name: GitSpec
+  branch: main
+
 spaces:
   # `key` is this space's permanent identity, and is what GitSpec matches on from
   # one sync to the next. It is deliberately independent of `title`, `path` and

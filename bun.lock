@@ -8,6 +8,14 @@
         "@types/bun": "^1.4.2",
       },
     },
+    "apps/web": {
+      "name": "@gitspec/web",
+      "version": "0.0.0",
+      "dependencies": {
+        "@gitspec/github": "workspace:*",
+        "@gitspec/render": "workspace:*",
+      },
+    },
     "packages/core": {
       "name": "@gitspec/core",
       "version": "0.0.0",
@@ -48,6 +56,8 @@
     "@gitspec/github": ["@gitspec/github@workspace:packages/github"],
 
     "@gitspec/render": ["@gitspec/render@workspace:packages/render"],
+
+    "@gitspec/web": ["@gitspec/web@workspace:apps/web"],
 
     "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 

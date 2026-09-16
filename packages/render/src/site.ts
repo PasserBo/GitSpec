@@ -2,7 +2,9 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Config, DiscoveryResult } from "@gitspec/core";
 import { normalizeBase } from "./base.ts";
+import { editorPage } from "./editor-page.ts";
 import { buildNav, renderPage } from "./layout.ts";
+import { buildManifest, type ManifestRepository } from "./manifest.ts";
 import { renderMarkdown, stripFrontmatter } from "./markdown.ts";
 
 export interface RenderedFile {
@@ -24,6 +26,10 @@ function outputPathFor(address: string): string {
 export interface RenderOptions {
     /** Path the site is mounted at, e.g. `/GitSpec` for a GitHub Pages project site. */
     base?: string;
+    /** Where edits are proposed. Without it the site is read-only and no edit link is shown. */
+    repository?: ManifestRepository;
+    /** The bundled editor, built by the caller. Omitted for a read-only build. */
+    editorBundle?: string;
 }
 
 export async function renderSite(
@@ -43,6 +49,8 @@ export async function renderSite(
     }
     const lookup = (path: string) => addressByPath.get(path);
 
+    const editable = Boolean(options.repository && options.editorBundle);
+
     const files: RenderedFile[] = [];
     for (const space of discovery.spaces) {
         for (const document of space.documents) {
@@ -57,9 +65,34 @@ export async function renderSite(
                     nav: buildNav(space, document, base),
                     base,
                     content,
+                    editHref: editable
+                        ? `${base}/_edit/?doc=${encodeURIComponent(document.id)}`
+                        : undefined,
                 }),
             });
         }
+    }
+
+    if (options.repository) {
+        files.push({
+            path: "_gitspec/manifest.json",
+            contents: JSON.stringify(
+                buildManifest({ discovery, base, repository: options.repository }),
+                null,
+                2,
+            ),
+        });
+    }
+
+    if (editable) {
+        files.push({ path: "_gitspec/editor.js", contents: options.editorBundle! });
+        files.push({
+            path: "_edit/index.html",
+            contents: editorPage({
+                siteTitle: config.site.title,
+                bundlePath: `${base}/_gitspec/editor.js`,
+            }),
+        });
     }
 
     return files;
