@@ -1,6 +1,6 @@
 export { addressFor, defaultHomeFor, normalizeSpacePath } from "./address.ts";
 export { BUILT_IN_EXCLUDE_DIRS, includeGlobsFor, parseConfig } from "./config.ts";
-export type { Config, SpaceConfig } from "./config.ts";
+export type { Config, RepositoryConfig, SpaceConfig } from "./config.ts";
 export { deriveId, documentFrom, parseFrontmatter } from "./document.ts";
 export type { Document, DocumentKind } from "./document.ts";
 export { discover } from "./discover.ts";

@@ -2,6 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { discover, DiscoveryError, parseConfig } from "@gitspec/core";
+import { buildEditorBundle } from "./bundle.ts";
 import { renderSite } from "./site.ts";
 
 /**
@@ -16,6 +17,19 @@ function flag(name: string, fallback: string): string {
     return index !== -1 ? (process.argv[index + 1] ?? fallback) : fallback;
 }
 
+/** Repository details, from `gitspec.yaml` unless the caller overrides them. */
+function repositoryFrom(config: { repository?: { owner: string; name: string; branch: string } }) {
+    const flagged = flag("repository", "");
+    const branch = flag("branch", "");
+    if (flagged) {
+        const [owner, name] = flagged.split("/");
+        if (!owner || !name) throw new Error(`--repository expects owner/name, got \`${flagged}\``);
+        return { owner, name, branch: branch || config.repository?.branch || "main" };
+    }
+    if (!config.repository) return undefined;
+    return branch ? { ...config.repository, branch } : config.repository;
+}
+
 const root = resolve(flag("root", "."));
 const configPath = resolve(root, flag("config", "gitspec.yaml"));
 const port = Number(flag("port", "4321"));
@@ -23,7 +37,12 @@ const port = Number(flag("port", "4321"));
 async function build(): Promise<Map<string, string>> {
     const config = parseConfig(await readFile(configPath, "utf8"));
     const discovery = await discover(root, config);
-    const files = await renderSite(root, config, discovery, { base: flag("base", "") });
+    const repository = repositoryFrom(config);
+    const files = await renderSite(root, config, discovery, {
+        base: flag("base", ""),
+        repository,
+        editorBundle: repository ? await buildEditorBundle() : undefined,
+    });
     return new Map(files.map((file) => [`/${file.path}`, file.contents]));
 }
 
@@ -51,12 +70,19 @@ Bun.serve({
 
         const url = new URL(request.url);
         const path = url.pathname.replace(/\/$/, "");
-        const body = files.get(`${path}/index.html`) ?? files.get(`${path || "/"}/index.html`);
 
-        if (!body) {
-            return new Response("Not found", { status: 404 });
-        }
-        return new Response(body, { headers: { "content-type": "text/html; charset=utf-8" } });
+        // Directory-style addresses resolve to their index; everything else — the
+        // manifest and the editor bundle — is served at its own path.
+        const key = files.has(path) ? path : `${path || ""}/index.html`;
+        const body = files.get(key);
+        if (body === undefined) return new Response("Not found", { status: 404 });
+
+        const type = key.endsWith(".js")
+            ? "text/javascript"
+            : key.endsWith(".json")
+              ? "application/json"
+              : "text/html";
+        return new Response(body, { headers: { "content-type": `${type}; charset=utf-8` } });
     },
 });
 

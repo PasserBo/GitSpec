@@ -1,5 +1,8 @@
 export { normalizeBase, withBase } from "./base.ts";
-export { buildNav, renderPage } from "./layout.ts";
+export { buildEditorBundle } from "./bundle.ts";
+export { buildNav, renderPage, SITE_STYLE } from "./layout.ts";
+export { buildManifest } from "./manifest.ts";
+export type { ManifestDocument, ManifestRepository, SiteManifest } from "./manifest.ts";
 export type { NavItem } from "./layout.ts";
 export { renderMarkdown, stripFrontmatter } from "./markdown.ts";
 export type { AddressLookup } from "./markdown.ts";

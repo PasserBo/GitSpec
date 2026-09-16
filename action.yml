@@ -26,6 +26,18 @@ inputs:
     required: false
     default: ""
 
+  repository:
+    description: >-
+      `owner/name` whose documents edits are proposed against. Overrides `repository`
+      in gitspec.yaml. Leave empty to keep the site read-only — without it no editor is
+      built and no edit link is shown.
+    required: false
+    default: ""
+  branch:
+    description: Branch edits are proposed against. Defaults to the configured one, or `main`.
+    required: false
+    default: ""
+
 outputs:
   path:
     description: Directory the site was written to.
@@ -51,4 +63,6 @@ runs:
           --root "${{ inputs.root }}" \
           --config "${{ inputs.config }}" \
           --out "${{ inputs.output }}" \
-          --base "${{ inputs.base }}"
+          --base "${{ inputs.base }}" \
+          ${{ inputs.repository && format('--repository "{0}"', inputs.repository) || '' }} \
+          ${{ inputs.branch && format('--branch "{0}"', inputs.branch) || '' }}

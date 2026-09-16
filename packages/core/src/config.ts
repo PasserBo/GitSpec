@@ -15,10 +15,19 @@ export interface SpaceConfig {
     home?: string;
 }
 
+export interface RepositoryConfig {
+    owner: string;
+    name: string;
+    /** Branch edits are proposed against. Defaults to `main`. */
+    branch: string;
+}
+
 export interface Config {
     version: number;
     site: { title: string };
     spaces: SpaceConfig[];
+    /** Where edits go. Absent means the site is read-only. */
+    repository?: RepositoryConfig;
 }
 
 /** Directory names never discovered, whatever a space's globs say (D-3). */
@@ -89,10 +98,20 @@ export function parseConfig(source: string): Config {
         seen.add(space.key);
     }
 
+    const repoRaw = raw.repository as Record<string, unknown> | undefined;
+    const repository = repoRaw
+        ? {
+              owner: required(repoRaw.owner, "owner", "`repository`"),
+              name: required(repoRaw.name, "name", "`repository`"),
+              branch: typeof repoRaw.branch === "string" ? repoRaw.branch : "main",
+          }
+        : undefined;
+
     return {
         version: typeof raw.version === "number" ? raw.version : 1,
         site: { title: String((raw.site as Record<string, unknown>)?.title ?? "") },
         spaces,
+        repository,
     };
 }
 

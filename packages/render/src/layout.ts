@@ -68,7 +68,7 @@ function renderNav(items: NavItem[]): string {
     return out.join("\n");
 }
 
-const STYLE = `
+export const SITE_STYLE = `
 :root { --fg:#1a1a1a; --muted:#6b6b6b; --rule:#e3e3e3; --accent:#0b5ed7; --bg:#fff; --code:#f6f6f6; }
 @media (prefers-color-scheme: dark) {
   :root { --fg:#e6e6e6; --muted:#9a9a9a; --rule:#2c2c2c; --accent:#7aa7ff; --bg:#161616; --code:#1f1f1f; }
@@ -94,6 +94,7 @@ th,td { border:1px solid var(--rule); padding:7px 11px; text-align:left; font-si
 blockquote { margin:1.2em 0; padding-left:14px; border-left:3px solid var(--rule); color:var(--muted); }
 hr { border:0; border-top:1px solid var(--rule); margin:2.4em 0; }
 .meta { color:var(--muted); font-size:13px; border-bottom:1px solid var(--rule); padding-bottom:14px; margin-bottom:8px; }
+nav .edit { margin-top:24px; font-size:13px; }
 @media (max-width:860px) { .shell { grid-template-columns:1fr; } nav { position:static; max-height:none; border-right:0; border-bottom:1px solid var(--rule); } main { padding:28px 20px 72px; } }
 `;
 
@@ -104,8 +105,9 @@ export function renderPage(args: {
     nav: NavItem[];
     content: string;
     base?: string;
+    editHref?: string;
 }): string {
-    const { siteTitle, space, document, nav, content, base = "" } = args;
+    const { siteTitle, space, document, nav, content, base = "", editHref } = args;
     const title = String(document.frontmatter.title ?? document.id);
     const status = document.frontmatter.status;
 
@@ -116,16 +118,21 @@ export function renderPage(args: {
             ? `<div class="meta">spec${status ? ` &middot; ${escape(String(status))}` : ""}</div>`
             : "";
 
+    const edit = editHref
+        ? `<a class="edit" href="${escape(editHref)}">Edit this page</a>`
+        : "";
+
     return `<!doctype html>
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escape(title)} &middot; ${escape(siteTitle)}</title>
-<style>${STYLE}</style>
+<style>${SITE_STYLE}</style>
 <div class="shell">
 <nav>
 <a class="site" href="${escape(withBase(base, space.path))}">${escape(siteTitle)}</a>
 ${renderNav(nav)}
+${edit}
 </nav>
 <main>
 ${meta}
