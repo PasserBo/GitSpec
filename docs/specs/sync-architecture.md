@@ -120,5 +120,8 @@ live site means the deploy job checks out branch content nobody has reviewed yet
 separate preview host is one more thing an adopter has to configure. R-2 is written as
 though the address were free.
 
-Also unresolved: whether a preview address, once it exists, is reachable
-without a GitSpec account at all.
+**A preview address raises its own access question.** Even once R-2 has somewhere to
+render, the branch being previewed is unmerged content. GitBook resolves this by
+requiring an account to open a preview link, which is a service standing between a
+reader and a repository they may already have access to — the arrangement B-1 of
+[Service boundary](service-boundary.md) exists to avoid.
