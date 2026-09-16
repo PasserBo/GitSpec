@@ -4,7 +4,7 @@ import type { Config, DiscoveryResult } from "@gitspec/core";
 import { normalizeBase } from "./base.ts";
 import { editorPage } from "./editor-page.ts";
 import { buildNav, renderPage } from "./layout.ts";
-import { buildManifest, type ManifestRepository } from "./manifest.ts";
+import { buildManifest, type ManifestAuth, type ManifestRepository } from "./manifest.ts";
 import { renderMarkdown, stripFrontmatter } from "./markdown.ts";
 
 export interface RenderedFile {
@@ -28,6 +28,8 @@ export interface RenderOptions {
     base?: string;
     /** Where edits are proposed. Without it the site is read-only and no edit link is shown. */
     repository?: ManifestRepository;
+    /** How readers sign in. Without it the editor falls back to a pasted token. */
+    auth?: ManifestAuth;
     /** The bundled editor, built by the caller. Omitted for a read-only build. */
     editorBundle?: string;
 }
@@ -77,7 +79,7 @@ export async function renderSite(
         files.push({
             path: "_gitspec/manifest.json",
             contents: JSON.stringify(
-                buildManifest({ discovery, base, repository: options.repository }),
+                buildManifest({ discovery, base, repository: options.repository, auth: options.auth }),
                 null,
                 2,
             ),

@@ -8,6 +8,10 @@
         "@types/bun": "^1.4.2",
       },
     },
+    "apps/broker": {
+      "name": "@gitspec/broker",
+      "version": "0.0.0",
+    },
     "apps/web": {
       "name": "@gitspec/web",
       "version": "0.0.0",
@@ -51,6 +55,8 @@
     },
   },
   "packages": {
+    "@gitspec/broker": ["@gitspec/broker@workspace:apps/broker"],
+
     "@gitspec/core": ["@gitspec/core@workspace:packages/core"],
 
     "@gitspec/github": ["@gitspec/github@workspace:packages/github"],

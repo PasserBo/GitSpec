@@ -18,6 +18,14 @@ repository:
   name: GitSpec
   branch: main
 
+# How readers sign in before editing. Commented out until the broker is deployed:
+# without it the editor falls back to a pasted token, which is scaffolding but works.
+# Both values are public — the client secret lives only in the broker's environment.
+#
+# auth:
+#   clientId: Iv23liJvhF7nbMOPOAeu
+#   broker: https://gitspec-broker.<your-subdomain>.workers.dev
+
 spaces:
   # `key` is this space's permanent identity, and is what GitSpec matches on from
   # one sync to the next. It is deliberately independent of `title`, `path` and

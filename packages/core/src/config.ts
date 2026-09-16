@@ -22,12 +22,21 @@ export interface RepositoryConfig {
     branch: string;
 }
 
+export interface AuthConfig {
+    /** GitHub App client id. Public by design; the secret lives only in the broker. */
+    clientId: string;
+    /** Base URL of the token broker. */
+    broker: string;
+}
+
 export interface Config {
     version: number;
     site: { title: string };
     spaces: SpaceConfig[];
     /** Where edits go. Absent means the site is read-only. */
     repository?: RepositoryConfig;
+    /** How readers sign in. Absent leaves the editor without a way to obtain a token. */
+    auth?: AuthConfig;
 }
 
 /** Directory names never discovered, whatever a space's globs say (D-3). */
@@ -107,11 +116,20 @@ export function parseConfig(source: string): Config {
           }
         : undefined;
 
+    const authRaw = raw.auth as Record<string, unknown> | undefined;
+    const auth = authRaw
+        ? {
+              clientId: required(authRaw.clientId, "clientId", "`auth`"),
+              broker: required(authRaw.broker, "broker", "`auth`"),
+          }
+        : undefined;
+
     return {
         version: typeof raw.version === "number" ? raw.version : 1,
         site: { title: String((raw.site as Record<string, unknown>)?.title ?? "") },
         spaces,
         repository,
+        auth,
     };
 }
 
