@@ -119,3 +119,6 @@ something: an artifact can be downloaded but not browsed, publishing previews in
 live site means the deploy job checks out branch content nobody has reviewed yet, and a
 separate preview host is one more thing an adopter has to configure. R-2 is written as
 though the address were free.
+
+Also unresolved: whether a preview address, once it exists, is reachable
+without a GitSpec account at all.
