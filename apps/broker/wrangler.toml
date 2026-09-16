@@ -1,0 +1,10 @@
+name = "gitspec-broker"
+main = "src/broker.ts"
+compatibility_date = "2026-09-01"
+
+# GITHUB_CLIENT_ID is public and may live here once the app exists.
+# GITHUB_CLIENT_SECRET must never be committed:
+#   wrangler secret put GITHUB_CLIENT_SECRET
+[vars]
+GITHUB_CLIENT_ID = "Iv23liJvhF7nbMOPOAeu"
+ALLOWED_ORIGINS = "https://passerbo.github.io,http://localhost:4321"

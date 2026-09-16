@@ -18,6 +18,13 @@ repository:
   name: GitSpec
   branch: main
 
+# How readers sign in before editing. Both values are public: the client id identifies
+# the app, the broker is a URL. The client secret lives only in the broker's environment
+# and is never in this repository.
+auth:
+  clientId: Iv23liJvhF7nbMOPOAeu
+  broker: https://gitspec-broker.bobo-yiyangxu.workers.dev
+
 spaces:
   # `key` is this space's permanent identity, and is what GitSpec matches on from
   # one sync to the next. It is deliberately independent of `title`, `path` and

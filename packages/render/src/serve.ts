@@ -41,6 +41,7 @@ async function build(): Promise<Map<string, string>> {
     const files = await renderSite(root, config, discovery, {
         base: flag("base", ""),
         repository,
+        auth: config.auth,
         editorBundle: repository ? await buildEditorBundle() : undefined,
     });
     return new Map(files.map((file) => [`/${file.path}`, file.contents]));

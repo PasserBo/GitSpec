@@ -1,0 +1,12 @@
+{
+  "name": "@gitspec/broker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/broker.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  }
+}

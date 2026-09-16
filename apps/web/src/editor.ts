@@ -1,4 +1,5 @@
 import { loadForEdit, restRepo, submitEdit, SubmitError, type PullRef } from "@gitspec/github";
+import { beginSignIn, completeSignIn, currentToken, signOut } from "./auth.ts";
 import { renderMarkdown, stripFrontmatter, withBase } from "@gitspec/render";
 import type { SiteManifest } from "@gitspec/render";
 
@@ -27,7 +28,7 @@ async function loadManifest(): Promise<SiteManifest> {
     return response.json();
 }
 
-function tokenScreen(onToken: (token: string) => void): void {
+function pasteScreen(onToken: (token: string) => void): void {
     $("app").innerHTML = `
 <div class="panel">
   <h1>Sign in to edit</h1>
@@ -129,17 +130,53 @@ function report(html: string, kind: "ok" | "bad"): void {
     $("result").innerHTML = `<div class="result ${kind}">${html}</div>`;
 }
 
+function signInScreen(auth: { clientId: string; broker: string }, docId: string): void {
+    $("app").innerHTML = `
+<div class="panel">
+  <h1>Sign in to edit</h1>
+  <p class="note">
+    GitSpec commits as you, so an edit carries your name and goes through review like
+    any other change. It can only reach repositories this app is installed on, and only
+    where you already have access.
+  </p>
+  <button id="signin" class="primary">Sign in with GitHub</button>
+</div>`;
+    $("signin").addEventListener("click", () => beginSignIn(auth, `?doc=${encodeURIComponent(docId)}`));
+}
+
+function panel(title: string, note: string, retry = false): void {
+    $("app").innerHTML =
+        `<div class="panel"><h1>${escape(title)}</h1><p class="note">${escape(note)}</p>` +
+        (retry ? `<button class="primary" onclick="location.reload()">Try again</button>` : "") +
+        `</div>`;
+}
+
 async function main(): Promise<void> {
     const manifest = await loadManifest();
+
+    // A redirect back from GitHub carries the code in the address bar, and completing it
+    // restores the query the editor was on. Read `doc` only after that has happened.
+    if (manifest.auth) {
+        try {
+            await completeSignIn(manifest.auth);
+        } catch (error) {
+            panel("Sign-in did not complete", String(error), true);
+            return;
+        }
+    }
+
     const id = new URLSearchParams(location.search).get("doc");
     const doc = manifest.documents.find((d) => d.id === id);
 
     if (!doc) {
-        $("app").innerHTML = `<div class="panel"><h1>Nothing to edit</h1><p class="note">No document with id <code>${escape(id ?? "")}</code> is part of this site.</p></div>`;
+        panel("Nothing to edit", `No document with id "${id ?? ""}" is part of this site.`);
         return;
     }
     if (!manifest.repository) {
-        $("app").innerHTML = `<div class="panel"><h1>Editing is not configured</h1><p class="note">This site was built without repository details, so an edit has nowhere to go. Set <code>repository</code> in <code>gitspec.yaml</code>, or pass it to the action.</p></div>`;
+        panel(
+            "Editing is not configured",
+            "This site was built without repository details, so an edit has nowhere to go. Set `repository` in gitspec.yaml, or pass it to the action.",
+        );
         return;
     }
 
@@ -151,10 +188,11 @@ async function main(): Promise<void> {
         try {
             loaded = await loadForEdit(repo, { documentId: doc.id, path: doc.path, base: repository.branch });
         } catch (error) {
-            // A bad token is the overwhelmingly likely cause, and leaving a stale one in
+            // A rejected token is the overwhelmingly likely cause, and leaving it in
             // storage would lock the editor into a loop it cannot explain.
-            localStorage.removeItem(TOKEN_KEY);
-            $("app").innerHTML = `<div class="panel"><h1>Could not open the document</h1><p class="note">${escape(String(error))}</p><button class="primary" onclick="location.reload()">Try again</button></div>`;
+            if (manifest.auth) signOut();
+            else localStorage.removeItem(TOKEN_KEY);
+            panel("Could not open the document", String(error), true);
             return;
         }
 
@@ -187,11 +225,19 @@ async function main(): Promise<void> {
         });
     };
 
+    if (manifest.auth) {
+        const token = await currentToken(manifest.auth);
+        if (token) await start(token);
+        else signInScreen(manifest.auth, doc.id);
+        return;
+    }
+
+    // No app configured: local development, where the paste screen is the only way in.
     const existing = localStorage.getItem(TOKEN_KEY);
     if (existing) await start(existing);
-    else tokenScreen((token) => void start(token));
+    else pasteScreen((token) => void start(token));
 }
 
 void main().catch((error) => {
-    $("app").innerHTML = `<div class="panel"><h1>Editor failed to start</h1><p class="note">${escape(String(error))}</p></div>`;
+    panel("Editor failed to start", String(error));
 });

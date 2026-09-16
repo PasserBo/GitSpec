@@ -18,9 +18,16 @@ export interface ManifestRepository {
     branch: string;
 }
 
+export interface ManifestAuth {
+    clientId: string;
+    broker: string;
+}
+
 export interface SiteManifest {
     base: string;
     repository?: ManifestRepository;
+    /** Both values are public: the client id identifies the app, the broker is a URL. */
+    auth?: ManifestAuth;
     documents: ManifestDocument[];
 }
 
@@ -37,10 +44,12 @@ export function buildManifest(args: {
     discovery: DiscoveryResult;
     base: string;
     repository?: ManifestRepository;
+    auth?: ManifestAuth;
 }): SiteManifest {
     return {
         base: args.base,
         repository: args.repository,
+        auth: args.auth,
         documents: args.discovery.spaces.flatMap((space) =>
             space.documents.map((document) => ({
                 id: document.id,

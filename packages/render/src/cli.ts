@@ -34,6 +34,7 @@ try {
     const files = await renderSite(root, config, discovery, {
         base: flag("base", ""),
         repository,
+        auth: config.auth,
         editorBundle: repository ? await buildEditorBundle() : undefined,
     });
 
