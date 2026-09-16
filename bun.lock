@@ -20,6 +20,10 @@
         "@types/picomatch": "^4.0.0",
       },
     },
+    "packages/github": {
+      "name": "@gitspec/github",
+      "version": "0.0.0",
+    },
     "packages/render": {
       "name": "@gitspec/render",
       "version": "0.0.0",
@@ -40,6 +44,8 @@
   },
   "packages": {
     "@gitspec/core": ["@gitspec/core@workspace:packages/core"],
+
+    "@gitspec/github": ["@gitspec/github@workspace:packages/github"],
 
     "@gitspec/render": ["@gitspec/render@workspace:packages/render"],
 

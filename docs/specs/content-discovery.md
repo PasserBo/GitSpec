@@ -6,7 +6,8 @@ status: draft
 owner: "@PasserBo"
 created: 2026-09-16
 updated: 2026-09-16
-governs: []
+governs:
+  - packages/core/**
 verified_against: null
 ---
 
