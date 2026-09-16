@@ -11,9 +11,13 @@ const ORIGIN = "https://passerbo.github.io";
 
 /** Records what reached GitHub, so a test can assert the secret never leaves here another way. */
 function fakeGitHub(response: unknown, status = 200) {
-    const calls: { url: string; body: Record<string, unknown> }[] = [];
+    const calls: { url: string; body: Record<string, string>; contentType?: string }[] = [];
     const impl = (async (url: string | URL | Request, init?: RequestInit) => {
-        calls.push({ url: String(url), body: JSON.parse(String(init?.body)) });
+        calls.push({
+            url: String(url),
+            body: Object.fromEntries(new URLSearchParams(String(init?.body))),
+            contentType: (init?.headers as Record<string, string> | undefined)?.["content-type"],
+        });
         return new Response(JSON.stringify(response), {
             status,
             headers: { "content-type": "application/json" },
@@ -66,12 +70,15 @@ describe("POST /token", () => {
         expect(response.status).toBe(200);
         expect(await response.json()).toMatchObject({ access_token: "gho_x", refresh_token: "ghr_y" });
         expect(github.calls[0]!.url).toBe("https://github.com/login/oauth/access_token");
+        expect(github.calls[0]!.contentType).toBe("application/x-www-form-urlencoded");
         expect(github.calls[0]!.body).toMatchObject({
             client_id: ENV.GITHUB_CLIENT_ID,
             client_secret: ENV.GITHUB_CLIENT_SECRET,
             code: "abc",
-            grant_type: "authorization_code",
         });
+        // grant_type is not a parameter of the web application flow; GitHub's parameter
+        // table for the code exchange does not list it.
+        expect(github.calls[0]!.body.grant_type).toBeUndefined();
     });
 
     test("a missing code never reaches GitHub", async () => {
