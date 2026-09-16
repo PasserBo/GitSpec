@@ -112,3 +112,10 @@ diff, and a paste-a-screenshot flow is exactly what a designer will reach for fi
 the editor still has to show the author what they are about to propose. Whether that is
 a rendered preview, a diff, or both, decides how much of the review actually happens
 before the pull request exists.
+
+**R-2 assumes a preview address exists.** GitHub Pages serves one site per repository, so
+there is no native per-pull-request address to render into. Each workable option costs
+something: an artifact can be downloaded but not browsed, publishing previews into the
+live site means the deploy job checks out branch content nobody has reviewed yet, and a
+separate preview host is one more thing an adopter has to configure. R-2 is written as
+though the address were free.
