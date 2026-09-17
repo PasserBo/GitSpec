@@ -1,4 +1,6 @@
-# Copy this into .github/workflows/ of your own repository.
+# Copy this into .github/workflows/ of your own repository — or let the setup page do it:
+# https://passerbo.github.io/GitSpec/_setup/ opens a pull request adding this file and a
+# gitspec.yaml, committed as you.
 #
 # It needs no secret and contacts no GitSpec service. Enable Pages once
 # (Settings > Pages > Source: GitHub Actions), and add a gitspec.yaml at the root.

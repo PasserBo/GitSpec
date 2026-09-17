@@ -2,7 +2,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { discover, DiscoveryError, parseConfig } from "@gitspec/core";
-import { buildEditorBundle } from "./bundle.ts";
+import { buildEditorBundle, buildSetupBundle } from "./bundle.ts";
 import { renderSite } from "./site.ts";
 
 /**
@@ -43,6 +43,7 @@ async function build(): Promise<Map<string, string>> {
         repository,
         auth: config.auth,
         editorBundle: repository ? await buildEditorBundle() : undefined,
+        setupBundle: config.site.setup && config.auth ? await buildSetupBundle() : undefined,
     });
     return new Map(files.map((file) => [`/${file.path}`, file.contents]));
 }

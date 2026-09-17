@@ -27,11 +27,17 @@ export interface AuthConfig {
     clientId: string;
     /** Base URL of the token broker. */
     broker: string;
+    /** The app's URL slug (github.com/apps/<slug>), so setup can link to its install page. */
+    appSlug?: string;
 }
 
 export interface Config {
     version: number;
-    site: { title: string };
+    site: {
+        title: string;
+        /** Emit the setup page. Only the site hosting onboarding should set this. */
+        setup: boolean;
+    };
     spaces: SpaceConfig[];
     /** Where edits go. Absent means the site is read-only. */
     repository?: RepositoryConfig;
@@ -121,12 +127,16 @@ export function parseConfig(source: string): Config {
         ? {
               clientId: required(authRaw.clientId, "clientId", "`auth`"),
               broker: required(authRaw.broker, "broker", "`auth`"),
+              appSlug: typeof authRaw.appSlug === "string" ? authRaw.appSlug : undefined,
           }
         : undefined;
 
     return {
         version: typeof raw.version === "number" ? raw.version : 1,
-        site: { title: String((raw.site as Record<string, unknown>)?.title ?? "") },
+        site: {
+            title: String((raw.site as Record<string, unknown>)?.title ?? ""),
+            setup: (raw.site as Record<string, unknown>)?.setup === true,
+        },
         spaces,
         repository,
         auth,

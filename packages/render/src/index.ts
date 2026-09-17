@@ -1,5 +1,6 @@
 export { normalizeBase, withBase } from "./base.ts";
-export { buildEditorBundle } from "./bundle.ts";
+export { buildBundle, buildEditorBundle, buildSetupBundle } from "./bundle.ts";
+export { appPage, editorPage } from "./editor-page.ts";
 export { buildNav, renderPage, SITE_STYLE } from "./layout.ts";
 export { buildManifest } from "./manifest.ts";
 export type { ManifestAuth, ManifestDocument, ManifestRepository, SiteManifest } from "./manifest.ts";

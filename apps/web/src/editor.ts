@@ -1,5 +1,6 @@
 import { loadForEdit, restRepo, submitEdit, SubmitError, type PullRef } from "@gitspec/github";
 import { beginSignIn, completeSignIn, currentToken, signOut } from "./auth.ts";
+import { $, escape, panel } from "./ui.ts";
 import { renderMarkdown, stripFrontmatter, withBase } from "@gitspec/render";
 import type { SiteManifest } from "@gitspec/render";
 
@@ -15,11 +16,6 @@ import type { SiteManifest } from "@gitspec/render";
  */
 
 const TOKEN_KEY = "gitspec:token";
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-
-function escape(text: string): string {
-    return text.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
-}
 
 async function loadManifest(): Promise<SiteManifest> {
     // The editor page lives at <base>/_edit/, so the manifest is one level up.
@@ -142,13 +138,6 @@ function signInScreen(auth: { clientId: string; broker: string }, docId: string)
   <button id="signin" class="primary">Sign in with GitHub</button>
 </div>`;
     $("signin").addEventListener("click", () => beginSignIn(auth, `?doc=${encodeURIComponent(docId)}`));
-}
-
-function panel(title: string, note: string, retry = false): void {
-    $("app").innerHTML =
-        `<div class="panel"><h1>${escape(title)}</h1><p class="note">${escape(note)}</p>` +
-        (retry ? `<button class="primary" onclick="location.reload()">Try again</button>` : "") +
-        `</div>`;
 }
 
 async function main(): Promise<void> {

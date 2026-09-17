@@ -6,7 +6,7 @@ What [Sync architecture](../docs/specs/sync-architecture.md) implies has to exis
 
 | App | Responsibility |
 | --- | --- |
-| `web` | The editor and the reading view. Renders a document from a ref, and submits an edit. |
+| `web` | The editor, and the setup page that opens a first pull request in a repository that has no site yet. Both are static and act only with the signed-in person's token. |
 | `server` | Holds the GitHub App credentials. Exchanges a user's OAuth grant for the ability to commit **as that user**, creates the branch, pushes the commit, opens or updates the pull request. |
 
 Two constraints on the split, both from the spec rather than from taste:

@@ -21,6 +21,7 @@ export interface ManifestRepository {
 export interface ManifestAuth {
     clientId: string;
     broker: string;
+    appSlug?: string;
 }
 
 export interface SiteManifest {

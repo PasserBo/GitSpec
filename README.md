@@ -4,8 +4,17 @@ A spec system where git is the source of truth and both humans and AI agents are
 first-class editors. An edit becomes a branch and a pull request; merging it is what
 makes it true.
 
-Design only so far — no product code yet. **The design lives in [`docs/`](docs/), and
-is itself the first thing GitSpec manages.**
+**The design lives in [`docs/`](docs/), and is itself the first thing GitSpec manages.**
+The site at https://passerbo.github.io/GitSpec/ is built by the Action in this repository
+from those files, and edited through the editor in this repository.
+
+## Getting a site of your own
+
+Sign in at **https://passerbo.github.io/GitSpec/_setup/**, pick a repository the
+GitSpec Docs app is installed on, and merge the pull request it opens. Then enable Pages
+once (Settings → Pages → Source: GitHub Actions). The manual steps in
+[`examples/docs.yml`](examples/docs.yml) remain the fallback; they are what setup does
+for you.
 
 ## Layout
 

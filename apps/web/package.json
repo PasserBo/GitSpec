@@ -3,8 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "scripts": { "typecheck": "tsc --noEmit" },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
   "dependencies": {
+    "@gitspec/core": "workspace:*",
     "@gitspec/github": "workspace:*",
     "@gitspec/render": "workspace:*"
   }
