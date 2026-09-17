@@ -91,6 +91,17 @@ export function restRepo(options: RestRepoOptions): RepoApi {
             return { sha: data.sha, text };
         },
 
+        async listDirectory(path, ref) {
+            const response = await call(
+                "GET",
+                `/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(ref)}`,
+            );
+            if (response.status === 404) return undefined;
+            const data = (await expectOk(response, `listing \`${path}\``)) as unknown;
+            // A file at that path answers with an object, not an array: not a directory.
+            return Array.isArray(data) ? (data as { name: string }[]).map((e) => e.name) : undefined;
+        },
+
         async putFile(args: PutFileArgs) {
             const encoded = btoa(
                 String.fromCharCode(...new TextEncoder().encode(args.contents)),
