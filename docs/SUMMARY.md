@@ -8,4 +8,5 @@
 * [Sync architecture](specs/sync-architecture.md)
 * [Content discovery](specs/content-discovery.md)
 * [Service boundary](specs/service-boundary.md)
+* [Onboarding](specs/onboarding.md)
 * [Drift detection](specs/drift-detection.md)

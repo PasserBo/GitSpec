@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Config, DiscoveryResult } from "@gitspec/core";
 import { normalizeBase } from "./base.ts";
-import { editorPage } from "./editor-page.ts";
+import { appPage, editorPage } from "./editor-page.ts";
 import { buildNav, renderPage } from "./layout.ts";
 import { buildManifest, type ManifestAuth, type ManifestRepository } from "./manifest.ts";
 import { renderMarkdown, stripFrontmatter } from "./markdown.ts";
@@ -32,6 +32,8 @@ export interface RenderOptions {
     auth?: ManifestAuth;
     /** The bundled editor, built by the caller. Omitted for a read-only build. */
     editorBundle?: string;
+    /** The bundled setup page. Emitted only when `site.setup` is on and sign-in is configured. */
+    setupBundle?: string;
 }
 
 export async function renderSite(
@@ -93,6 +95,20 @@ export async function renderSite(
             contents: editorPage({
                 siteTitle: config.site.title,
                 bundlePath: `${base}/_gitspec/editor.js`,
+            }),
+        });
+    }
+
+    // O-4: the setup page is served from the site that opts in — GitSpec's own — and
+    // acts only with the signed-in person's token. It needs sign-in configured, and it
+    // needs no documents at all: it is about repositories that have no site yet.
+    if (config.site.setup && options.auth && options.setupBundle) {
+        files.push({ path: "_gitspec/setup.js", contents: options.setupBundle });
+        files.push({
+            path: "_setup/index.html",
+            contents: appPage({
+                title: `Set up · ${config.site.title}`,
+                bundlePath: `${base}/_gitspec/setup.js`,
             }),
         });
     }

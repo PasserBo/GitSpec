@@ -10,6 +10,9 @@ version: 1
 
 site:
   title: GitSpec
+  # This is the site that hosts onboarding for other repositories (O-4). Adopter sites
+  # leave it off and get no /_setup/ page.
+  setup: true
 
 # Where edits from the editor are proposed. Absent means the site is read-only, which
 # is the default: a site is useful before anyone can write to it.
@@ -24,6 +27,7 @@ repository:
 auth:
   clientId: Iv23liJvhF7nbMOPOAeu
   broker: https://gitspec-broker.bobo-yiyangxu.workers.dev
+  appSlug: gitspec-docs
 
 spaces:
   # `key` is this space's permanent identity, and is what GitSpec matches on from
