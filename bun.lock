@@ -16,6 +16,7 @@
       "name": "@gitspec/web",
       "version": "0.0.0",
       "dependencies": {
+        "@gitspec/core": "workspace:*",
         "@gitspec/github": "workspace:*",
         "@gitspec/render": "workspace:*",
       },

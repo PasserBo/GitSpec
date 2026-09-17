@@ -2,7 +2,7 @@
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { discover, DiscoveryError, parseConfig } from "@gitspec/core";
-import { buildEditorBundle } from "./bundle.ts";
+import { buildEditorBundle, buildSetupBundle } from "./bundle.ts";
 import { renderSite } from "./site.ts";
 
 function flag(name: string, fallback: string): string {
@@ -36,6 +36,7 @@ try {
         repository,
         auth: config.auth,
         editorBundle: repository ? await buildEditorBundle() : undefined,
+        setupBundle: config.site.setup && config.auth ? await buildSetupBundle() : undefined,
     });
 
     // Removed rather than merged: a stale page from a document that has since been
