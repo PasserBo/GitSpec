@@ -1,0 +1,32 @@
+name: CI
+
+# The product's own checks. A tool whose premise is that documentation rots unnoticed
+# had, until this workflow, never once run its own test suite outside a laptop.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Tests and types
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      # --frozen-lockfile so a dependency that drifted from the lockfile fails here
+      # rather than resolving to something nobody chose.
+      - run: bun install --frozen-lockfile
+      - run: bun test
+      - run: bun run typecheck

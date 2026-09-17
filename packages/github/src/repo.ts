@@ -13,7 +13,8 @@ export interface PutFileArgs {
     path: string;
     branch: string;
     message: string;
-    contents: string;
+    /** Text, or raw bytes for a file that is not text at all — an image, say. */
+    contents: string | Uint8Array;
     /** Blob sha being replaced. Omitted when the file does not yet exist on the branch. */
     sha?: string;
 }

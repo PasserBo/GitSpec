@@ -50,7 +50,10 @@ export class FakeRepo implements RepoApi {
         this.commits.push({ branch: args.branch, path: args.path, message: args.message, sha: args.sha });
         this.files.set(`${args.branch}:${args.path}`, {
             sha: `sha-${this.commits.length}`,
-            text: args.contents,
+            text:
+                typeof args.contents === "string"
+                    ? args.contents
+                    : new TextDecoder().decode(args.contents),
         });
         this.branches.set(args.branch, `commit-${this.commits.length}`);
     }

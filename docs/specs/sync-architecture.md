@@ -5,7 +5,7 @@ title: Sync architecture
 status: draft
 owner: "@PasserBo"
 created: 2026-09-15
-updated: 2026-09-16
+updated: 2026-09-18
 governs:
   - packages/github/**
   - packages/render/**
@@ -88,6 +88,9 @@ edit the same document, they are working on one pull request, and git handles th
 - **R-5** — The deployment prefix is a boundary. No link the renderer emits points above
   it, including one a document wrote as site-absolute. A site built from one repository
   reaches only that repository's content.
+- **R-6** — A file GitSpec cannot read faithfully is refused, naming the reason. It is
+  never presented as empty, because an empty document offered for editing is a deletion
+  the author did not ask for.
 
 ## Open questions
 
