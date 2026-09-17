@@ -9,4 +9,5 @@
 * [Content discovery](specs/content-discovery.md)
 * [Service boundary](specs/service-boundary.md)
 * [Onboarding](specs/onboarding.md)
+* [Authoring](specs/authoring.md)
 * [Drift detection](specs/drift-detection.md)
