@@ -1,3 +1,4 @@
+import { resolveBranch } from "./branch.ts";
 import { SubmitError } from "./errors.ts";
 import type { PullRef, RepoApi } from "./repo.ts";
 
@@ -25,17 +26,6 @@ export interface SubmitResult {
     created: boolean;
 }
 
-/** Git refs disallow a fair amount; ids are already slug-shaped, so this is a guard, not a transform. */
-export function branchNameFor(documentId: string, attempt = 1): string {
-    const slug =
-        documentId
-            .toLowerCase()
-            .replace(/[^a-z0-9._-]+/g, "-")
-            .replace(/^[-.]+|[-.]+$/g, "")
-            .replace(/\.lock$/, "") || "document";
-    return attempt === 1 ? `gitspec/${slug}` : `gitspec/${slug}-${attempt}`;
-}
-
 function commitMessage(submission: EditSubmission): string {
     const subject = `docs: update ${submission.title ?? submission.documentId}`;
     const trailers = Object.entries(submission.trailers ?? {}).map(([k, v]) => `${k}: ${v}`);
@@ -57,36 +47,7 @@ export async function submitEdit(repo: RepoApi, submission: EditSubmission): Pro
         throw new SubmitError("E-1", "an edit must name the file it changes");
     }
 
-    // E-2/E-3: the open pull request for this document, if there is one, decides
-    // everything. Its branch is reused; a second pull request is never opened.
-    let branch = "";
-    let pull: PullRef | undefined;
-    for (let attempt = 1; attempt <= 50; attempt++) {
-        const candidate = branchNameFor(submission.documentId, attempt);
-        if (candidate === submission.base) {
-            throw new SubmitError("E-1", `the branch for \`${submission.documentId}\` collides with the base branch`);
-        }
-
-        const open = await repo.findOpenPull(candidate);
-        if (open) {
-            branch = candidate;
-            pull = open;
-            break;
-        }
-
-        // A branch with no open pull request is spent — its pull request was merged or
-        // closed. A-4 forbids forcing it back to base, so the next edit gets the next
-        // name instead. Nothing is destroyed and E-2 still holds, because only one pull
-        // request for this document is open at a time.
-        if ((await repo.getBranchSha(candidate)) === undefined) {
-            branch = candidate;
-            break;
-        }
-    }
-
-    if (!branch) {
-        throw new SubmitError("E-2", `no free branch name for \`${submission.documentId}\` after 50 attempts`);
-    }
+    const { branch, pull } = await resolveBranch(repo, submission.documentId, submission.base);
 
     const baseSha = await repo.getBranchSha(submission.base);
     if (!baseSha) {

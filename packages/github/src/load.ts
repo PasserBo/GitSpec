@@ -1,6 +1,6 @@
 import { SubmitError } from "./errors.ts";
 import type { PullRef, RepoApi } from "./repo.ts";
-import { branchNameFor } from "./submit.ts";
+import { branchNameFor } from "./branch.ts";
 
 export interface LoadForEditArgs {
     documentId: string;

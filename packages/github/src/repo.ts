@@ -30,6 +30,8 @@ export interface RepoApi {
     getBranchSha(branch: string): Promise<string | undefined>;
     createBranch(branch: string, fromSha: string): Promise<void>;
     getFile(path: string, ref: string): Promise<FileContent | undefined>;
+    /** Entry names directly under a directory, or undefined when there is no such directory. */
+    listDirectory(path: string, ref: string): Promise<string[] | undefined>;
     putFile(args: PutFileArgs): Promise<void>;
     findOpenPull(headBranch: string): Promise<PullRef | undefined>;
     createPull(args: { head: string; base: string; title: string; body: string }): Promise<PullRef>;
