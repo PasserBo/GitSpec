@@ -1,5 +1,6 @@
 import { parse as parseYaml } from "yaml";
 import { addressFor } from "./address.ts";
+import { FRONTMATTER_FENCE } from "./frontmatter.ts";
 
 export type DocumentKind = "spec" | "page";
 
@@ -18,10 +19,8 @@ export interface Document {
     frontmatter: Record<string, unknown>;
 }
 
-const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
-
 export function parseFrontmatter(source: string): Record<string, unknown> {
-    const match = FRONTMATTER.exec(source);
+    const match = FRONTMATTER_FENCE.exec(source);
     if (!match?.[1]) return {};
     try {
         const data = parseYaml(match[1]) as unknown;
