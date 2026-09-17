@@ -9,6 +9,8 @@ updated: 2026-09-18
 governs:
   - packages/core/src/frontmatter.ts
   - packages/core/src/schema.ts
+  - apps/web/src/form.ts
+  - apps/web/src/editor.ts
 verified_against: null
 ---
 
@@ -89,6 +91,16 @@ anything it cannot map key to key — flow mappings, quoted keys, anchors, merge
 because a wrong guess silently corrupts a file. That is the right default and it is also
 untested against real repositories. Every document in this one is editable; nobody knows
 what fraction of a stranger's repository would be.
+
+**The editor bundle now carries a YAML parser.** Reading values into a form needs one,
+and it added about a hundred kilobytes to a bundle that was already large. The weight
+falls only on someone who clicked Edit — the published pages are static HTML and load
+none of it — but the page has a visible pause before it appears, and a rich editing
+surface will add more. Splitting the bundle so the text arrives before the rest is the
+obvious answer and has not been done.
+
+Writing a smaller parser is not the answer: W-7's guard works by comparing the line scan
+against a real parser, and two agreeing implementations is the entire safety property.
 
 **Validation is available and unenforced.** `validateFrontmatter` can judge a document,
 and nothing runs it on the way in. A spec that breaks its own format merged into this

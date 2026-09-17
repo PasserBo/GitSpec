@@ -60,14 +60,7 @@ export const SPEC_SCHEMA: readonly Field[] = [
         rule: "F-3",
         help: "Only an active spec is drift-checked.",
     },
-    {
-        key: "owner",
-        label: "Owner",
-        type: { kind: "text" },
-        required: true,
-        rule: "F-1",
-        help: "Who answers questions about this document.",
-    },
+    { key: "owner", label: "Owner", type: { kind: "text" }, required: true, rule: "F-1" },
     { key: "created", label: "Created", type: { kind: "date" }, required: true, rule: "F-1" },
     { key: "updated", label: "Updated", type: { kind: "date" }, required: true, rule: "F-1" },
     {

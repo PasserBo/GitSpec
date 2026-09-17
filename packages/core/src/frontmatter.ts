@@ -32,9 +32,14 @@ export interface FrontmatterBlock {
 
 export type Located =
     /** No frontmatter at all. Common: F-6 makes `page` the default, and pages often have none. */
-    | { kind: "absent" }
-    /** Present, but not safely editable key by key. The reason is shown to the author. */
-    | { kind: "opaque"; reason: string }
+    | { kind: "absent"; bodyStart: 0 }
+    /**
+     * Present, but not safely editable key by key. The reason is shown to the author.
+     * It still reports where the body starts: W-8 says editing stays available, and an
+     * author who cannot have a form must still be able to save a change to the text
+     * without losing the block above it.
+     */
+    | { kind: "opaque"; reason: string; bodyStart: number }
     | FrontmatterBlock;
 
 /**
@@ -48,7 +53,7 @@ const KEY_LINE = /^([A-Za-z_][A-Za-z0-9_-]*):(\s|$)/;
 
 export function locateFrontmatter(source: string): Located {
     const match = FRONTMATTER_FENCE.exec(source);
-    if (!match) return { kind: "absent" };
+    if (!match) return { kind: "absent", bodyStart: 0 };
 
     const raw = match[1] ?? "";
     // FENCE anchors on `---\r?\n`, so the first newline in the source ends the opening fence.
@@ -56,18 +61,18 @@ export function locateFrontmatter(source: string): Located {
     const rawEnd = rawStart + raw.length;
 
     const scan = scanKeys(raw, rawStart, rawEnd);
-    if (scan.duplicate) return { kind: "opaque", reason: "a key appears more than once" };
+    if (scan.duplicate) return { kind: "opaque", reason: "a key appears more than once", bodyStart: match[0].length };
 
     let parsed: unknown;
     try {
         parsed = parseYaml(raw);
     } catch {
-        return { kind: "opaque", reason: "its YAML could not be parsed" };
+        return { kind: "opaque", reason: "its YAML could not be parsed", bodyStart: match[0].length };
     }
     // `---\n---\n` is an empty block, not a broken one.
     if (parsed === null || parsed === undefined) parsed = {};
     if (typeof parsed !== "object" || Array.isArray(parsed)) {
-        return { kind: "opaque", reason: "it is not a mapping of keys to values" };
+        return { kind: "opaque", reason: "it is not a mapping of keys to values", bodyStart: match[0].length };
     }
     const values = parsed as Record<string, unknown>;
 
@@ -78,7 +83,11 @@ export function locateFrontmatter(source: string): Located {
     // this block well enough to edit one field of it without risking the rest.
     const named = Object.keys(values);
     if (named.length !== keys.size || named.some((key) => !keys.has(key))) {
-        return { kind: "opaque", reason: "it uses YAML this editor cannot edit key by key" };
+        return {
+            kind: "opaque",
+            reason: "it uses YAML this editor cannot edit key by key",
+            bodyStart: match[0].length,
+        };
     }
 
     return {
@@ -119,14 +128,12 @@ function scanKeys(
 
 /** Everything after the frontmatter. The whole file when there is none. */
 export function readBody(source: string): string {
-    const located = locateFrontmatter(source);
-    return located.kind === "block" ? source.slice(located.bodyStart) : source;
+    return source.slice(locateFrontmatter(source).bodyStart);
 }
 
-/** Swap the body, leaving the frontmatter block byte-identical. */
+/** Swap the body, leaving whatever precedes it byte-identical — form or no form. */
 export function replaceBody(source: string, body: string): string {
-    const located = locateFrontmatter(source);
-    return located.kind === "block" ? source.slice(0, located.bodyStart) + body : body;
+    return source.slice(0, locateFrontmatter(source).bodyStart) + body;
 }
 
 /**
@@ -142,6 +149,7 @@ export function spliceFrontmatter(
     edits: Record<string, FrontmatterValue | undefined>,
 ): string {
     const located = locateFrontmatter(source);
+    if (Object.keys(edits).length === 0) return source;
     if (located.kind === "opaque") {
         throw new Error(`this document's frontmatter cannot be edited field by field: ${located.reason}`);
     }

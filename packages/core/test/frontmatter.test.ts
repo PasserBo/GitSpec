@@ -131,6 +131,14 @@ describe("W-4: frontmatter that cannot be edited key by key is refused", () => {
         expect(opaque("id: [unclosed").kind).toBe("opaque");
     });
 
+    test("W-8: its body is still editable, and the block survives", () => {
+        const source = "---\n{ a: 1 }\n---\n\n# Body\n";
+        expect(readBody(source)).toBe("\n# Body\n");
+        expect(replaceBody(source, "\n# Edited\n")).toBe("---\n{ a: 1 }\n---\n\n# Edited\n");
+        // Asking nothing of the frontmatter is not the moment to refuse.
+        expect(spliceFrontmatter(source, {})).toBe(source);
+    });
+
     test("splicing one is refused rather than guessed at", () => {
         const source = "---\n{ a: 1 }\n---\n\n# Body\n";
         expect(() => spliceFrontmatter(source, { a: "2" })).toThrow(/field by field/);
@@ -141,7 +149,7 @@ describe("documents with no frontmatter", () => {
     const PLAIN = "# A page\n\nSome prose.\n";
 
     test("are located as absent, not as broken", () => {
-        expect(locateFrontmatter(PLAIN)).toEqual({ kind: "absent" });
+        expect(locateFrontmatter(PLAIN)).toEqual({ kind: "absent", bodyStart: 0 });
     });
 
     test("are all body", () => {
