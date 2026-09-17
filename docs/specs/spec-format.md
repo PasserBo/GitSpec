@@ -101,3 +101,7 @@ missing its `kind`, is silently treated as prose: it is served, it looks right, 
 nothing ever checks it. The failure is invisible in exactly the way this project exists
 to prevent, and the alternative — defaulting to `spec` — is worse only because it makes
 adoption loud rather than quiet.
+
+## Test Spec Update Feature
+
+Test update exist edit spec PR
