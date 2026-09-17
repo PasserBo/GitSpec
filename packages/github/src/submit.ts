@@ -1,5 +1,6 @@
 import { resolveBranch } from "./branch.ts";
 import { SubmitError } from "./errors.ts";
+import type { FileToWrite } from "./files.ts";
 import type { PullRef, RepoApi } from "./repo.ts";
 
 export interface EditSubmission {
@@ -17,6 +18,16 @@ export interface EditSubmission {
     summary?: string;
     /** Commit trailers. E-5 uses these to mark an edit as an agent's without changing its author. */
     trailers?: Record<string, string>;
+    /**
+     * Files the document now refers to and the repository does not have yet — an image
+     * pasted into it, most often.
+     *
+     * I-3: they ride this document's own branch and pull request, so an image and the
+     * paragraph referring to it are merged together or not at all. Sending them to a
+     * branch of their own would let a review approve prose whose illustrations are still
+     * in someone else's queue.
+     */
+    attachments?: FileToWrite[];
 }
 
 export interface SubmitResult {
@@ -61,18 +72,41 @@ export async function submitEdit(repo: RepoApi, submission: EditSubmission): Pro
     // The blob sha comes from the branch being written to, so an append builds on the
     // edits already on it rather than on whatever base looked like.
     const existing = await repo.getFile(submission.path, branch);
-    if (existing?.text === submission.contents) {
+    const unchanged = existing?.text === submission.contents;
+
+    // I-6: an asset path carries a hash of its own bytes, so a file already on the branch
+    // at that path holds exactly these bytes and writing it again would be a commit that
+    // changes nothing.
+    const attachments: FileToWrite[] = [];
+    for (const file of submission.attachments ?? []) {
+        if (!(await repo.getFile(file.path, branch))) attachments.push(file);
+    }
+
+    if (unchanged && attachments.length === 0) {
         if (pull) return { branch, pull, created: false };
         throw new SubmitError("E-1", `\`${submission.path}\` is unchanged; there is nothing to propose`);
     }
 
-    await repo.putFile({
-        path: submission.path,
-        branch,
-        message: commitMessage(submission),
-        contents: submission.contents,
-        sha: existing?.sha,
-    });
+    // Written first, so the branch never holds a document pointing at a file that is not
+    // there yet — which is what a reader of the pull request would otherwise see.
+    for (const file of attachments) {
+        await repo.putFile({
+            path: file.path,
+            branch,
+            message: `docs: add ${file.path}`,
+            contents: file.contents,
+        });
+    }
+
+    if (!unchanged) {
+        await repo.putFile({
+            path: submission.path,
+            branch,
+            message: commitMessage(submission),
+            contents: submission.contents,
+            sha: existing?.sha,
+        });
+    }
 
     if (pull) return { branch, pull, created: false };
 

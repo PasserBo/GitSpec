@@ -1,4 +1,9 @@
-import type { FileToWrite } from "@gitspec/github";
+/**
+ * Setup writes text and only text — a config, a workflow, a starter page — so it narrows
+ * `FileToWrite` rather than inheriting the byte case it can never produce. The result
+ * page shows each file verbatim before anything is proposed, which needs a string.
+ */
+type TextFile = { path: string; contents: string };
 
 /** What setup learned about a repository before deciding anything. */
 export interface RepoFacts {
@@ -17,7 +22,7 @@ export interface SetupAuth {
 
 export type SetupPlan =
     | { kind: "already"; reason: string }
-    | { kind: "propose"; files: FileToWrite[]; siteUrl: string; notes: string[] };
+    | { kind: "propose"; files: TextFile[]; siteUrl: string; notes: string[] };
 
 /** GitHub Pages serves a project site at `<owner>.github.io/<repo>/`; a user site at the root. */
 export function siteUrlFor(owner: string, name: string): string {
@@ -97,7 +102,7 @@ export function planSetup(facts: RepoFacts, auth: SetupAuth, workflowTemplate: s
         };
     }
 
-    const files: FileToWrite[] = [
+    const files: TextFile[] = [
         { path: "gitspec.yaml", contents: generateConfig(facts, auth) },
         { path: ".github/workflows/docs.yml", contents: workflowTemplate },
     ];

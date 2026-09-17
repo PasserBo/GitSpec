@@ -37,6 +37,7 @@ try {
         auth: config.auth,
         editorBundle: repository ? await buildEditorBundle() : undefined,
         setupBundle: config.site.setup && config.auth ? await buildSetupBundle() : undefined,
+        onWarning: (message) => console.warn(`warning: ${message}`),
     });
 
     // Removed rather than merged: a stale page from a document that has since been

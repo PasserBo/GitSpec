@@ -34,7 +34,7 @@ const root = resolve(flag("root", "."));
 const configPath = resolve(root, flag("config", "gitspec.yaml"));
 const port = Number(flag("port", "4321"));
 
-async function build(): Promise<Map<string, string>> {
+async function build(): Promise<Map<string, string | Uint8Array>> {
     const config = parseConfig(await readFile(configPath, "utf8"));
     const discovery = await discover(root, config);
     const repository = repositoryFrom(config);
@@ -56,10 +56,21 @@ function problemPage(message: string): string {
 <p style="color:#666">Fix the configuration and reload.</p>`;
 }
 
+const ASSET_TYPES: Record<string, string> = {
+    png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
+    svg: "image/svg+xml", webp: "image/webp", avif: "image/avif", ico: "image/x-icon",
+    bmp: "image/bmp", pdf: "application/pdf", mp4: "video/mp4", webm: "video/webm",
+    mp3: "audio/mpeg", wav: "audio/wav", zip: "application/zip", csv: "text/csv",
+};
+
+function contentTypeFor(key: string): string {
+    return ASSET_TYPES[key.slice(key.lastIndexOf(".") + 1).toLowerCase()] ?? "application/octet-stream";
+}
+
 Bun.serve({
     port,
     async fetch(request) {
-        let files: Map<string, string>;
+        let files: Map<string, string | Uint8Array>;
         try {
             files = await build();
         } catch (error) {
@@ -79,6 +90,13 @@ Bun.serve({
         const body = files.get(key);
         if (body === undefined) return new Response("Not found", { status: 404 });
 
+        // An asset is bytes and has its own type; everything the renderer emits as text
+        // is one of three.
+        if (typeof body !== "string") {
+            return new Response(body, {
+                headers: { "content-type": contentTypeFor(key) },
+            });
+        }
         const type = key.endsWith(".js")
             ? "text/javascript"
             : key.endsWith(".json")

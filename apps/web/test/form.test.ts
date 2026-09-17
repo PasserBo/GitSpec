@@ -50,7 +50,13 @@ describe("values survive the trip through an input and back", () => {
         const fields = planForm(SPEC, "spec");
         if (fields.kind !== "fields") throw new Error("expected fields");
         const governs = fields.fields.find((f) => f.field.key === "governs")!;
-        expect(governs.text).toBe("packages/core/src/frontmatter.ts\npackages/core/src/schema.ts");
+        // A block list arrives as one path per line, which is how it is edited.
+        expect(governs.text.split("\n")).toEqual([
+            "packages/core/src/frontmatter.ts",
+            "packages/core/src/schema.ts",
+            "apps/web/src/form.ts",
+            "apps/web/src/editor.ts",
+        ]);
         expect(valuesFrom(SPEC_SCHEMA, { ...opened(SPEC), governs: "a/**\n\n  b/**  \n" }).governs).toEqual([
             "a/**",
             "b/**",
