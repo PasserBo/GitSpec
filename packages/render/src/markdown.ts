@@ -12,6 +12,14 @@ import { withBase } from "./base.ts";
 /** Repository-root-relative path → the address that document answers at. */
 export type AddressLookup = (repoPath: string) => string | undefined;
 
+/**
+ * Repository-root-relative path → the finished URL to serve it from, or undefined when
+ * there is no such file. Async because resolving one means reading and hashing it; the
+ * editor supplies a different implementation that answers `blob:` for an image pasted a
+ * moment ago and not yet committed.
+ */
+export type AssetResolver = (repoPath: string) => Promise<string | undefined>;
+
 /** Leaves the site entirely: a scheme, a protocol-relative host, or a mail/tel target. */
 function isExternal(url: string): boolean {
     return /^[a-z][a-z0-9+.-]*:/i.test(url) || url.startsWith("//");
@@ -39,20 +47,25 @@ const URL_ATTRIBUTE: Record<string, string> = { a: "href", img: "src" };
  * domain, which on a GitHub Pages project site lands on a different site belonging to
  * the same account. R-5 makes the prefix a boundary rather than a convenience.
  */
-function rewriteUrls(fromPath: string, lookup: AddressLookup, base: string) {
+function rewriteUrls(fromPath: string, lookup: AddressLookup, base: string, asset?: AssetResolver) {
     const dir = posix.dirname(fromPath);
 
-    return () => (tree: unknown) => {
+    return () => async (tree: unknown) => {
+        // Collected first and resolved after, because resolving an asset reads a file
+        // and `visit` cannot await. The tree is walked once either way.
+        const found: { node: Element; attribute: string; value: string }[] = [];
         visit(tree as never, "element", (node: Element) => {
             const attribute = URL_ATTRIBUTE[node.tagName ?? ""];
             if (!attribute) return;
-
             const value = node.properties?.[attribute];
             if (typeof value !== "string" || value === "") return;
             if (isExternal(value) || value.startsWith("#")) return;
+            found.push({ node, attribute, value });
+        });
 
+        for (const { node, attribute, value } of found) {
             const [pathPart = "", hash] = value.split("#");
-            if (!pathPart) return; // a bare fragment stays put
+            if (!pathPart) continue; // a bare fragment stays put
 
             let href: string;
             if (pathPart.startsWith("/")) {
@@ -61,15 +74,23 @@ function rewriteUrls(fromPath: string, lookup: AddressLookup, base: string) {
             } else {
                 const target = posix.normalize(posix.join(dir, pathPart));
                 const address = lookup(target);
-                // A relative link resolving to no known document is left as written
-                // rather than rewritten to a guess, which would 404 while looking
-                // deliberate. Being relative, it cannot escape the site on its own.
-                if (!address) return;
-                href = withBase(base, address);
+                if (address) {
+                    href = withBase(base, address);
+                } else {
+                    // Not a document. It may still be a file in the repository — an
+                    // image, most often — in which case it is copied into the site and
+                    // served from a content-addressed path.
+                    const resolved = await asset?.(target);
+                    // A relative link resolving to nothing at all is left as written
+                    // rather than rewritten to a guess, which would 404 while looking
+                    // deliberate. Being relative, it cannot escape the site on its own.
+                    if (!resolved) continue;
+                    href = resolved;
+                }
             }
 
             node.properties![attribute] = hash ? `${href}#${hash}` : href;
-        });
+        }
     };
 }
 
@@ -78,6 +99,7 @@ export async function renderMarkdown(
     source: string,
     lookup: AddressLookup,
     base = "",
+    asset?: AssetResolver,
 ): Promise<string> {
     const file = await unified()
         .use(remarkParse)
@@ -88,7 +110,7 @@ export async function renderMarkdown(
         // so its links are rewritten like any other.
         .use(remarkRehype, { allowDangerousHtml: true })
         .use(rehypeRaw)
-        .use(rewriteUrls(document.path, lookup, base))
+        .use(rewriteUrls(document.path, lookup, base, asset))
         .use(rehypeStringify, { allowDangerousHtml: true })
         .process(source);
 

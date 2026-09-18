@@ -3,6 +3,15 @@ export { BUILT_IN_EXCLUDE_DIRS, includeGlobsFor, parseConfig } from "./config.ts
 export type { AuthConfig, Config, RepositoryConfig, SpaceConfig } from "./config.ts";
 export { deriveId, documentFrom, parseFrontmatter } from "./document.ts";
 export type { Document, DocumentKind } from "./document.ts";
+export {
+    locateFrontmatter,
+    readBody,
+    replaceBody,
+    spliceFrontmatter,
+} from "./frontmatter.ts";
+export type { FrontmatterBlock, FrontmatterValue, Located } from "./frontmatter.ts";
+export { PAGE_SCHEMA, SPEC_SCHEMA, schemaFor, validateFrontmatter } from "./schema.ts";
+export type { Field, FieldType, Issue } from "./schema.ts";
 export { discover } from "./discover.ts";
 export type { DiscoveryResult, SpaceResult } from "./discover.ts";
 export { DiscoveryError } from "./errors.ts";

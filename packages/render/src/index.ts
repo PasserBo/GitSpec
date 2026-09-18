@@ -1,3 +1,4 @@
+export { assetOutputPath, hash8, looksLikeAsset, MAX_ASSET_BYTES } from "./assets.ts";
 export { normalizeBase, withBase } from "./base.ts";
 export { buildBundle, buildEditorBundle, buildSetupBundle } from "./bundle.ts";
 export { appPage, editorPage } from "./editor-page.ts";
@@ -6,6 +7,6 @@ export { buildManifest } from "./manifest.ts";
 export type { ManifestAuth, ManifestDocument, ManifestRepository, SiteManifest } from "./manifest.ts";
 export type { NavItem } from "./layout.ts";
 export { renderMarkdown, stripFrontmatter } from "./markdown.ts";
-export type { AddressLookup } from "./markdown.ts";
+export type { AddressLookup, AssetResolver } from "./markdown.ts";
 export { renderSite } from "./site.ts";
 export type { RenderedFile, RenderOptions } from "./site.ts";

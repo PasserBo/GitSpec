@@ -13,6 +13,24 @@ export interface RestRepoOptions {
     fetch?: typeof globalThis.fetch;
 }
 
+/**
+ * Base64 for the Contents API, in chunks.
+ *
+ * The obvious `String.fromCharCode(...bytes)` passes every byte as a separate argument and
+ * throws `RangeError` somewhere around 100 kB in a browser — which is small enough that a
+ * screenshot reaches it, and large enough that no document ever did.
+ */
+const BASE64_CHUNK = 0x8000;
+
+function toBase64(contents: string | Uint8Array): string {
+    const bytes = typeof contents === "string" ? new TextEncoder().encode(contents) : contents;
+    let binary = "";
+    for (let i = 0; i < bytes.length; i += BASE64_CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + BASE64_CHUNK));
+    }
+    return btoa(binary);
+}
+
 /** GitHub's REST API, reached directly from wherever the token already is. */
 export function restRepo(options: RestRepoOptions): RepoApi {
     const api = options.apiBase ?? "https://api.github.com";
@@ -82,12 +100,22 @@ export function restRepo(options: RestRepoOptions): RepoApi {
                 content?: string;
                 encoding?: string;
             };
-            const text =
-                data.encoding === "base64" && data.content
-                    ? new TextDecoder().decode(
-                          Uint8Array.from(atob(data.content.replace(/\n/g, "")), (c) => c.charCodeAt(0)),
-                      )
-                    : "";
+            // R-6. GitHub answers a file over 1 MB with `encoding: "none"` and no content.
+            // Reading that as "" is how a document merely too big to read becomes an empty
+            // file on the next save: the editor shows nothing, and the author saves nothing
+            // over it.
+            if (data.encoding !== "base64") {
+                throw new SubmitError(
+                    "R-6",
+                    `\`${path}\` cannot be read through the Contents API: GitHub reported encoding ` +
+                        `\`${data.encoding ?? "none"}\`, which is what it answers for a file over 1 MB. ` +
+                        `A file that large has to be edited in git.`,
+                );
+            }
+            // An empty file is base64 with empty content, and is genuinely empty.
+            const text = new TextDecoder().decode(
+                Uint8Array.from(atob((data.content ?? "").replace(/\n/g, "")), (c) => c.charCodeAt(0)),
+            );
             return { sha: data.sha, text };
         },
 
@@ -103,9 +131,7 @@ export function restRepo(options: RestRepoOptions): RepoApi {
         },
 
         async putFile(args: PutFileArgs) {
-            const encoded = btoa(
-                String.fromCharCode(...new TextEncoder().encode(args.contents)),
-            );
+            const encoded = toBase64(args.contents);
             const response = await call(
                 "PUT",
                 `/contents/${args.path.split("/").map(encodeURIComponent).join("/")}`,

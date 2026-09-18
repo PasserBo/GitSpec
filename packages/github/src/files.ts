@@ -5,7 +5,8 @@ import type { PullRef, RepoApi } from "./repo.ts";
 export interface FileToWrite {
     /** Repository-root-relative. */
     path: string;
-    contents: string;
+    /** Text, or raw bytes for a file that is not text — an image, say. */
+    contents: string | Uint8Array;
 }
 
 export interface FilesSubmission {

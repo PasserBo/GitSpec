@@ -5,12 +5,15 @@ import { normalizeBase } from "./base.ts";
 import { appPage, editorPage } from "./editor-page.ts";
 import { buildNav, renderPage } from "./layout.ts";
 import { buildManifest, type ManifestAuth, type ManifestRepository } from "./manifest.ts";
-import { renderMarkdown, stripFrontmatter } from "./markdown.ts";
+import { renderMarkdown, stripFrontmatter, type AssetResolver } from "./markdown.ts";
+import { assetOutputPath, hash8, looksLikeAsset, MAX_ASSET_BYTES } from "./assets.ts";
+import { withBase } from "./base.ts";
 
 export interface RenderedFile {
     /** Output path relative to the site root, e.g. `index.html`, `spec-format/index.html`. */
     path: string;
-    contents: string;
+    /** Text for a page, raw bytes for an asset. */
+    contents: string | Uint8Array;
 }
 
 /** `/` → `index.html`; `/spec-format` → `spec-format/index.html`. Directory-style URLs, so links need no extension. */
@@ -34,6 +37,8 @@ export interface RenderOptions {
     editorBundle?: string;
     /** The bundled setup page. Emitted only when `site.setup` is on and sign-in is configured. */
     setupBundle?: string;
+    /** I-5: a reference to a missing or oversized asset is said out loud, not swallowed. */
+    onWarning?: (message: string) => void;
 }
 
 export async function renderSite(
@@ -55,11 +60,49 @@ export async function renderSite(
 
     const editable = Boolean(options.repository && options.editorBundle);
 
+    // I-1: an asset is here because a document points at it. Nothing is globbed, so a
+    // file nobody links to is never copied and an images directory cannot trip D-6.
+    const assets = new Map<string, { outputPath: string; bytes: Uint8Array }>();
+    const warn = options.onWarning ?? (() => {});
+
+    const assetsFor =
+        (fromPath: string): AssetResolver =>
+        async (repoPath) => {
+            if (!looksLikeAsset(repoPath)) return undefined;
+            const already = assets.get(repoPath);
+            // I-6: two documents pointing at one file emit it once.
+            if (already) return withBase(base, `/${already.outputPath}`);
+
+            let bytes: Uint8Array;
+            try {
+                bytes = new Uint8Array(await readFile(join(root, repoPath)));
+            } catch {
+                warn(`${fromPath} points at ${repoPath}, which is not in the repository`);
+                return undefined;
+            }
+            if (bytes.length > MAX_ASSET_BYTES) {
+                warn(
+                    `${fromPath} points at ${repoPath}, which is ${Math.round(bytes.length / 1024)} kB — ` +
+                        `over the ${MAX_ASSET_BYTES / 1024} kB limit, so it is left as written`,
+                );
+                return undefined;
+            }
+            const outputPath = assetOutputPath(repoPath, await hash8(bytes));
+            assets.set(repoPath, { outputPath, bytes });
+            return withBase(base, `/${outputPath}`);
+        };
+
     const files: RenderedFile[] = [];
     for (const space of discovery.spaces) {
         for (const document of space.documents) {
             const source = await readFile(join(root, document.path), "utf8");
-            const content = await renderMarkdown(document, stripFrontmatter(source), lookup, base);
+            const content = await renderMarkdown(
+                document,
+                stripFrontmatter(source),
+                lookup,
+                base,
+                assetsFor(document.path),
+            );
             files.push({
                 path: outputPathFor(document.address),
                 contents: renderPage({
@@ -77,11 +120,25 @@ export async function renderSite(
         }
     }
 
+    for (const [, asset] of assets) {
+        files.push({ path: asset.outputPath, contents: asset.bytes });
+    }
+
     if (options.repository) {
         files.push({
             path: "_gitspec/manifest.json",
             contents: JSON.stringify(
-                buildManifest({ discovery, base, repository: options.repository, auth: options.auth }),
+                buildManifest({
+                    discovery,
+                    base,
+                    repository: options.repository,
+                    auth: options.auth,
+                    // So the editor's preview can show an image that is already committed,
+                    // without knowing how the build addressed it.
+                    assets: Object.fromEntries(
+                        [...assets].map(([repoPath, a]) => [repoPath, withBase(base, `/${a.outputPath}`)]),
+                    ),
+                }),
                 null,
                 2,
             ),

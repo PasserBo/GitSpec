@@ -12,6 +12,7 @@
     "preview": "bun packages/render/src/serve.ts"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.2"
+    "@types/bun": "^1.4.2",
+    "typescript": "^5.7.2"
   }
 }

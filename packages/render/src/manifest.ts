@@ -26,6 +26,12 @@ export interface ManifestAuth {
 
 export interface SiteManifest {
     base: string;
+    /**
+     * Repository path to the URL the built site serves it from. Present so the editor's
+     * preview can show an image that is already committed without recomputing how the
+     * build addressed it.
+     */
+    assets?: Record<string, string>;
     repository?: ManifestRepository;
     /** Both values are public: the client id identifies the app, the broker is a URL. */
     auth?: ManifestAuth;
@@ -46,9 +52,11 @@ export function buildManifest(args: {
     base: string;
     repository?: ManifestRepository;
     auth?: ManifestAuth;
+    assets?: Record<string, string>;
 }): SiteManifest {
     return {
         base: args.base,
+        assets: args.assets,
         repository: args.repository,
         auth: args.auth,
         documents: args.discovery.spaces.flatMap((space) =>

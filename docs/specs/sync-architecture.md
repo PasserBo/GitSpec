@@ -5,7 +5,7 @@ title: Sync architecture
 status: draft
 owner: "@PasserBo"
 created: 2026-09-15
-updated: 2026-09-16
+updated: 2026-09-18
 governs:
   - packages/github/**
   - packages/render/**
@@ -88,6 +88,9 @@ edit the same document, they are working on one pull request, and git handles th
 - **R-5** — The deployment prefix is a boundary. No link the renderer emits points above
   it, including one a document wrote as site-absolute. A site built from one repository
   reaches only that repository's content.
+- **R-6** — A file GitSpec cannot read faithfully is refused, naming the reason. It is
+  never presented as empty, because an empty document offered for editing is a deletion
+  the author did not ask for.
 
 ## Open questions
 
@@ -107,8 +110,9 @@ the fork-and-pull-request path would normally let them. Whether to support that 
 open, and it interacts with R-2, since previews of fork branches are the case GitBook
 disables for security.
 
-**Assets.** Nothing here covers images and other binaries. They are large, they do not
-diff, and a paste-a-screenshot flow is exactly what a designer will reach for first.
+**Assets.** Settled in [Assets](assets.md): they are discovered by reference, addressed
+by content, and committed to the branch of the document that refers to them (I-7). What
+remains open there is the 1 MB ceiling and the fact that nothing ever deletes one.
 
 **What the editor shows before submitting.** A-2 makes merging the moment of truth, but
 the editor still has to show the author what they are about to propose. Whether that is
