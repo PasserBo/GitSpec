@@ -1,9 +1,9 @@
 import { loadForEdit, restRepo, submitEdit, SubmitError, type PullRef } from "@gitspec/github";
 import { beginSignIn, completeSignIn, currentToken, signOut } from "./auth.ts";
 import { $, escape, panel } from "./ui.ts";
-import { renderMarkdown, withBase } from "@gitspec/render";
-import type { SiteManifest } from "@gitspec/render";
-import { schemaFor, validateFrontmatter, type Field } from "@gitspec/core";
+import { renderMarkdown, withBase } from "@gitspec/render/browser";
+import type { SiteManifest } from "@gitspec/render/browser";
+import { schemaFor, validateFrontmatter, type Field } from "@gitspec/core/browser";
 import { assemble, fieldControl, planForm, readBody, valuesFrom } from "./form.ts";
 import { checkAsset, markdownFor, prepareAsset, referenced, type PendingAsset } from "./attach.ts";
 

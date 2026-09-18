@@ -1,7 +1,21 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
-const run = promisify(execFile);
+/**
+ * Resolved when it is called, never when the module loads.
+ *
+ * `const run = promisify(execFile)` at the top of this file is what broke the editor: a
+ * bundler targeting the browser stubs `node:child_process` to an empty object, so
+ * `promisify(undefined)` threw during module evaluation — before any code could run, and
+ * before anything could catch it. The page sat on "Loading…" saying nothing.
+ */
+async function git(root: string, args: string[]): Promise<string> {
+    const { stdout } = await promisify(execFile)("git", args, {
+        cwd: root,
+        maxBuffer: 64 * 1024 * 1024,
+    });
+    return String(stdout);
+}
 
 /**
  * When a document was first written and last changed, read from the repository.
@@ -37,8 +51,8 @@ export async function readHistory(
     // the file. Reporting nothing is the only honest option, and saying so is what tells
     // an adopter their workflow needs `fetch-depth: 0`.
     try {
-        const { stdout } = await run("git", ["rev-parse", "--is-shallow-repository"], { cwd: root });
-        if (stdout.trim() === "true") {
+        const shallow = await git(root, ["rev-parse", "--is-shallow-repository"]);
+        if (shallow.trim() === "true") {
             onWarning(
                 "the checkout is shallow, so no document can be dated from its history — " +
                     "set `fetch-depth: 0` on actions/checkout to restore the dates",
@@ -53,14 +67,15 @@ export async function readHistory(
 
     let stdout: string;
     try {
-        ({ stdout } = await run(
-            "git",
-            // One pass over the whole history rather than two calls per document. Author
-            // date rather than commit date, so a rebase does not restate when the work
-            // was done.
-            ["log", `--format=${RECORD}%aI`, "--name-only", "--diff-filter=AMR", "--no-renames"],
-            { cwd: root, maxBuffer: 64 * 1024 * 1024 },
-        ));
+        // One pass over the whole history rather than two calls per document. Author date
+        // rather than commit date, so a rebase does not restate when the work was done.
+        stdout = await git(root, [
+            "log",
+            `--format=${RECORD}%aI`,
+            "--name-only",
+            "--diff-filter=AMR",
+            "--no-renames",
+        ]);
     } catch {
         return history;
     }

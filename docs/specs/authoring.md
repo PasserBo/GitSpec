@@ -7,6 +7,8 @@ owner: "@PasserBo"
 governs:
   - packages/core/src/frontmatter.ts
   - packages/core/src/schema.ts
+  - packages/core/src/browser.ts
+  - packages/render/src/browser.ts
   - apps/web/src/form.ts
   - apps/web/src/editor.ts
 verified_against: null
@@ -69,6 +71,10 @@ fallback below is a first-class path rather than an error state.
   The editor says which document and why, and offers the file as text instead.
 - **W-8** — Editing is always available. No document becomes uneditable because a richer
   surface could not be offered for it.
+- **W-9** — What the browser loads reaches no build-time module. A bundler targeting the
+  browser stubs a Node import rather than refusing it, so a successful build proves
+  nothing; the constraint holds because each package offers the browser its own entry and
+  the import graph is checked.
 
 ## Open questions
 
@@ -89,6 +95,16 @@ anything it cannot map key to key — flow mappings, quoted keys, anchors, merge
 because a wrong guess silently corrupts a file. That is the right default and it is also
 untested against real repositories. Every document in this one is editable; nobody knows
 what fraction of a stranger's repository would be.
+
+**W-9 was learned the expensive way.** A build-time module reached the editor through a
+barrel export, and one line of module-level work in it — `promisify(execFile)`, against a
+`node:child_process` the bundler had stubbed to an empty object — threw during module
+evaluation. Nothing rendered, nothing was logged beyond the raw TypeError, and the page
+showed "Loading…" indefinitely. It reached the published site.
+
+Tree shaking is why this had not happened before, and why it could not keep not
+happening: it removes unused functions, not work done at the top of a module. The
+separate browser entries are the fix, and the import-graph test is what keeps them honest.
 
 **The editor bundle now carries a YAML parser.** Reading values into a form needs one,
 and it added about a hundred kilobytes to a bundle that was already large. The weight

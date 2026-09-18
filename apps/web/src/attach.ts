@@ -1,5 +1,5 @@
 import { posix } from "node:path";
-import { hash8, looksLikeAsset, MAX_ASSET_BYTES } from "@gitspec/render";
+import { hash8, looksLikeAsset, MAX_ASSET_BYTES } from "@gitspec/render/browser";
 
 /**
  * Pasting a file into a document.

@@ -1,5 +1,5 @@
 import { restRepo, restUser, submitFiles, SubmitError, type AccessibleRepository } from "@gitspec/github";
-import type { SiteManifest } from "@gitspec/render";
+import type { SiteManifest } from "@gitspec/render/browser";
 import workflowTemplate from "../../../examples/docs.yml" with { type: "text" };
 import { beginSignIn, completeSignIn, currentToken, signOut } from "./auth.ts";
 import { planSetup, type RepoFacts, type SetupPlan } from "./plan.ts";

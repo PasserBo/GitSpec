@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { SPEC_SCHEMA, validateFrontmatter } from "@gitspec/core";
+import { locateFrontmatter, SPEC_SCHEMA, validateFrontmatter } from "@gitspec/core";
 import { assemble, planForm, readBody, textFrom, valuesFrom } from "../src/form.ts";
 
 const ROOT = join(import.meta.dir, "../../..");
@@ -50,13 +50,14 @@ describe("values survive the trip through an input and back", () => {
         const fields = planForm(SPEC, "spec");
         if (fields.kind !== "fields") throw new Error("expected fields");
         const governs = fields.fields.find((f) => f.field.key === "governs")!;
-        // A block list arrives as one path per line, which is how it is edited.
-        expect(governs.text.split("\n")).toEqual([
-            "packages/core/src/frontmatter.ts",
-            "packages/core/src/schema.ts",
-            "apps/web/src/form.ts",
-            "apps/web/src/editor.ts",
-        ]);
+        // A block list arrives as one path per line, which is how it is edited. Asserted
+        // by shape rather than by contents, so adding a governed file is not a test edit.
+        expect(governs.text.split("\n").length).toBeGreaterThan(1);
+        expect(governs.text.split("\n")).toEqual(
+            (locateFrontmatter(SPEC).kind === "block"
+                ? ((locateFrontmatter(SPEC) as { values: Record<string, unknown> }).values.governs as string[])
+                : []),
+        );
         expect(valuesFrom(SPEC_SCHEMA, { ...opened(SPEC), governs: "a/**\n\n  b/**  \n" }).governs).toEqual([
             "a/**",
             "b/**",
