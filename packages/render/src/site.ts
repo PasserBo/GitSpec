@@ -7,6 +7,7 @@ import { buildNav, renderPage } from "./layout.ts";
 import { buildManifest, type ManifestAuth, type ManifestRepository } from "./manifest.ts";
 import { renderMarkdown, stripFrontmatter, type AssetResolver } from "./markdown.ts";
 import { assetOutputPath, hash8, looksLikeAsset, MAX_ASSET_BYTES } from "./assets.ts";
+import { readHistory } from "./history.ts";
 import { withBase } from "./base.ts";
 
 export interface RenderedFile {
@@ -59,6 +60,10 @@ export async function renderSite(
     const lookup = (path: string) => addressByPath.get(path);
 
     const editable = Boolean(options.repository && options.editorBundle);
+
+    // One pass over the repository's history for every document at once. F-7: the dates
+    // a page shows are the repository's, and there is nowhere else they could come from.
+    const history = await readHistory(root, (message) => (options.onWarning ?? (() => {}))(message));
 
     // I-1: an asset is here because a document points at it. Nothing is globbed, so a
     // file nobody links to is never copied and an images directory cannot trip D-6.
@@ -115,6 +120,7 @@ export async function renderSite(
                     editHref: editable
                         ? `${base}/_edit/?doc=${encodeURIComponent(document.id)}`
                         : undefined,
+                    history: history.get(document.path),
                 }),
             });
         }

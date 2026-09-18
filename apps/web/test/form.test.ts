@@ -74,7 +74,7 @@ describe("values survive the trip through an input and back", () => {
     });
 
     test("and the form reports what is wrong before anything is written", () => {
-        const values = valuesFrom(SPEC_SCHEMA, { ...opened(SPEC), status: "retired", created: "" });
+        const values = valuesFrom(SPEC_SCHEMA, { ...opened(SPEC), status: "retired", owner: "" });
         expect(validateFrontmatter(SPEC_SCHEMA, values).map((i) => i.rule).sort()).toEqual(["F-1", "F-3"]);
     });
 });
@@ -112,16 +112,13 @@ describe("a spec that has no frontmatter yet", () => {
             title: "A new spec",
             status: "draft",
             owner: "@PasserBo",
-            created: "2026-09-18",
-            updated: "2026-09-18",
             governs: "",
             verified_against: "",
         });
         const next = assemble(BARE, values, BARE);
         expect(next).toBe(
             "---\nkind: spec\nid: new\ntitle: A new spec\nstatus: draft\nowner: \"@PasserBo\"\n" +
-                "created: 2026-09-18\nupdated: 2026-09-18\ngoverns: []\nverified_against: null\n---\n\n" +
-                "# A new spec\n\n## Intent\n",
+                "governs: []\nverified_against: null\n---\n\n# A new spec\n\n## Intent\n",
         );
         expect(validateFrontmatter(SPEC_SCHEMA, values)).toEqual([]);
     });

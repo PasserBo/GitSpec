@@ -4,8 +4,6 @@ id: authoring
 title: Authoring
 status: draft
 owner: "@PasserBo"
-created: 2026-09-18
-updated: 2026-09-18
 governs:
   - packages/core/src/frontmatter.ts
   - packages/core/src/schema.ts

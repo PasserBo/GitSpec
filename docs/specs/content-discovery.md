@@ -4,8 +4,6 @@ id: content-discovery
 title: Content discovery
 status: draft
 owner: "@PasserBo"
-created: 2026-09-16
-updated: 2026-09-16
 governs:
   - packages/core/**
 verified_against: null

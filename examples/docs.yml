@@ -20,6 +20,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # F-7 reads each document's dates from the commit history. The default shallow
+          # clone can see only the tip, so without this every page loses its date — and
+          # the build says so rather than showing a wrong one.
+          fetch-depth: 0
       - uses: PasserBo/GitSpec@main
         with:
           output: _site

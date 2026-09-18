@@ -106,17 +106,23 @@ export function renderPage(args: {
     content: string;
     base?: string;
     editHref?: string;
+    /** F-7: when the repository says this last changed. Absent when git cannot say. */
+    history?: { created?: string; updated?: string };
 }): string {
-    const { siteTitle, space, document, nav, content, base = "", editHref } = args;
+    const { siteTitle, space, document, nav, content, base = "", editHref, history } = args;
     const title = String(document.frontmatter.title ?? document.id);
     const status = document.frontmatter.status;
 
     // The kind and status are shown because a reader's first question about a spec is
-    // whether it is binding, and F-3 makes that answerable.
-    const meta =
-        document.kind === "spec"
-            ? `<div class="meta">spec${status ? ` &middot; ${escape(String(status))}` : ""}</div>`
-            : "";
+    // whether it is binding, and F-3 makes that answerable. The second is how old it is,
+    // which F-7 answers from the history rather than from a field someone has to
+    // remember to bump.
+    const parts = [
+        document.kind === "spec" ? "spec" : undefined,
+        document.kind === "spec" && status ? escape(String(status)) : undefined,
+        history?.updated ? `updated ${escape(history.updated)}` : undefined,
+    ].filter(Boolean);
+    const meta = parts.length > 0 ? `<div class="meta">${parts.join(" &middot; ")}</div>` : "";
 
     const edit = editHref
         ? `<a class="edit" href="${escape(editHref)}">Edit this page</a>`

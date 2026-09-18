@@ -18,8 +18,6 @@ const VALID = {
     title: "A spec",
     status: "draft",
     owner: "@PasserBo",
-    created: "2026-09-15",
-    updated: "2026-09-18",
     governs: ["packages/core/**"],
     verified_against: null,
 };
@@ -42,13 +40,11 @@ describe("F-1: every key is required, and no key outside the format is allowed",
     test("every missing key is reported at once, not one save at a time", () => {
         const issues = validateFrontmatter(SPEC_SCHEMA, { kind: "spec" });
         expect(issues.map((i) => i.key).sort()).toEqual([
-            "created",
             "governs",
             "id",
             "owner",
             "status",
             "title",
-            "updated",
             "verified_against",
         ]);
     });
@@ -71,7 +67,6 @@ describe("each field carries the claim it comes from", () => {
         ["status", "retired", "F-3"],
         ["governs", "packages/core/**", "F-4"],
         ["verified_against", "not-a-sha", "F-5"],
-        ["created", "18/09/2026", "F-1"],
     ])("a bad %s is reported against %s's rule", (key, value, rule) => {
         const issues = validateFrontmatter(SPEC_SCHEMA, { ...VALID, [key]: value });
         expect(issues).toHaveLength(1);
@@ -87,8 +82,13 @@ describe("each field carries the claim it comes from", () => {
         expect(validateFrontmatter(SPEC_SCHEMA, { ...VALID, verified_against: "5b5008e" })).toEqual([]);
     });
 
-    test("a date that is not a date is rejected even in the right shape", () => {
-        expect(validateFrontmatter(SPEC_SCHEMA, { ...VALID, created: "2026-13-45" })).toHaveLength(1);
+    test("F-7: a date the repository already knows is not a key the format accepts", () => {
+        // Removed rather than made optional. Three of eight documents had already drifted
+        // from git in four days, and an optional field drifts exactly as well.
+        const issues = validateFrontmatter(SPEC_SCHEMA, { ...VALID, created: "2026-09-15" });
+        expect(issues).toEqual([
+            { key: "created", rule: "F-1", message: "`created` is not a key this format defines" },
+        ]);
     });
 });
 
@@ -119,8 +119,6 @@ describe("the schema is the format, in F-1's order", () => {
             "title",
             "status",
             "owner",
-            "created",
-            "updated",
             "governs",
             "verified_against",
         ]);

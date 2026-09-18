@@ -4,8 +4,6 @@ id: onboarding
 title: Onboarding
 status: draft
 owner: "@PasserBo"
-created: 2026-09-17
-updated: 2026-09-17
 governs:
   - apps/web/src/setup.ts
   - apps/web/src/plan.ts
