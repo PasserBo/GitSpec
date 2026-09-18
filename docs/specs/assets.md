@@ -2,7 +2,7 @@
 kind: spec
 id: assets
 title: Assets
-status: draft
+status: active
 owner: "@PasserBo"
 created: 2026-09-18
 updated: 2026-09-18
