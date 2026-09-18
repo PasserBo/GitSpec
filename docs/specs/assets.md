@@ -2,7 +2,7 @@
 kind: spec
 id: assets
 title: Assets
-status: draft
+status: active
 owner: "@PasserBo"
 governs:
   - packages/render/src/assets.ts
