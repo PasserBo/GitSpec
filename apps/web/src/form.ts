@@ -7,7 +7,7 @@ import {
     type DocumentKind,
     type Field,
     type FrontmatterValue,
-} from "@gitspec/core";
+} from "@gitspec/core/browser";
 import { escape } from "./ui.ts";
 
 /**
