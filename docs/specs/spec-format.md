@@ -4,8 +4,6 @@ id: spec-format
 title: Spec document format
 status: draft
 owner: "@PasserBo"
-created: 2026-09-15
-updated: 2026-09-15
 governs: []
 verified_against: null
 ---
@@ -38,8 +36,8 @@ value against code, and flagging it would train people to ignore the tool.
 ### Frontmatter
 
 - **F-1** — Every spec begins with YAML frontmatter containing `kind`, `id`, `title`,
-  `status`, `owner`, `created`, `updated`, `governs` and `verified_against`. Missing or
-  unknown keys are an error.
+  `status`, `owner`, `governs` and `verified_against`. Missing or unknown keys are an
+  error.
 - **F-6** — `kind` is `spec` or `page`, and is `page` when absent. Every rule in this
   document applies only to a document whose `kind` is `spec`; a `page` is subject to
   none of them beyond having an `id`.
@@ -52,6 +50,10 @@ value against code, and flagging it would train people to ignore the tool.
   never drift-checked.
 - **F-5** — `verified_against` is a commit SHA recording the last time a human
   confirmed the spec matched the code, or `null` if that has never happened.
+- **F-7** — A spec states no fact the repository already holds. When it was written and
+  when it last changed are read from the commit history, never written in the document.
+  `verified_against` is not an exception: git records that a file changed, and cannot
+  record that a person read it and agreed.
 
 ### Structure
 
@@ -77,6 +79,13 @@ value against code, and flagging it would train people to ignore the tool.
   another claim. Shared context belongs in the subsection heading or in `Intent`.
 
 ## Open questions
+
+**What else is a copy of something git already knows.** F-7 removed two fields on the
+evidence that three of eight documents had already drifted from the history in four days.
+`owner` is the next candidate: CODEOWNERS is the git-native form of it, it is enforced at
+review time rather than trusted, and F-1 currently asks every author to write a name that
+nothing checks. The argument against is that CODEOWNERS is a path rule, and a spec's
+owner is a property of the document rather than of where it happens to sit.
 
 **Claim granularity.** C-5 pushes toward many small claims; readability pushes toward
 few large ones. A claim covering six numbers reports drift without saying which number

@@ -4,8 +4,6 @@ id: service-boundary
 title: Service boundary
 status: draft
 owner: "@PasserBo"
-created: 2026-09-16
-updated: 2026-09-16
 governs: []
 verified_against: null
 ---

@@ -1,5 +1,7 @@
 export { assetOutputPath, hash8, looksLikeAsset, MAX_ASSET_BYTES } from "./assets.ts";
 export { normalizeBase, withBase } from "./base.ts";
+export { readHistory } from "./history.ts";
+export type { DocumentHistory } from "./history.ts";
 export { buildBundle, buildEditorBundle, buildSetupBundle } from "./bundle.ts";
 export { appPage, editorPage } from "./editor-page.ts";
 export { buildNav, renderPage, SITE_STYLE } from "./layout.ts";

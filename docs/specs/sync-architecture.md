@@ -4,8 +4,6 @@ id: sync-architecture
 title: Sync architecture
 status: draft
 owner: "@PasserBo"
-created: 2026-09-15
-updated: 2026-09-18
 governs:
   - packages/github/**
   - packages/render/**

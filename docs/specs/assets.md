@@ -4,8 +4,6 @@ id: assets
 title: Assets
 status: draft
 owner: "@PasserBo"
-created: 2026-09-18
-updated: 2026-09-18
 governs:
   - packages/render/src/assets.ts
   - apps/web/src/attach.ts

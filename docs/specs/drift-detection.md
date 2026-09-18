@@ -4,8 +4,6 @@ id: drift-detection
 title: Drift detection
 status: draft
 owner: "@PasserBo"
-created: 2026-09-15
-updated: 2026-09-15
 governs: []
 verified_against: null
 ---
