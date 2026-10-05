@@ -5,7 +5,8 @@ import { renderMarkdown, withBase } from "@gitspec/render/browser";
 import type { SiteManifest } from "@gitspec/render/browser";
 import { schemaFor, validateFrontmatter, type Field } from "@gitspec/core/browser";
 import { assemble, fieldControl, planForm, readBody, valuesFrom } from "./form.ts";
-import { checkAsset, markdownFor, prepareAsset, referenced, type PendingAsset } from "./attach.ts";
+import { checkAsset, prepareAsset, referenced, type PendingAsset } from "./attach.ts";
+import { mountRichEditor, type RichEditor } from "./rich/index.ts";
 
 /**
  * The editor. A static page that talks to GitHub with the reader's own token and to
@@ -25,6 +26,8 @@ import { checkAsset, markdownFor, prepareAsset, referenced, type PendingAsset } 
  */
 
 const TOKEN_KEY = "gitspec:token";
+/** Which surface someone last chose. A preference, not a property of the document. */
+const MODE_KEY = "gitspec:mode";
 
 async function loadManifest(): Promise<SiteManifest> {
     // The editor page lives at <base>/_edit/, so the manifest is one level up.
@@ -97,12 +100,15 @@ function editorScreen(args: {
     <strong>${escape(doc.title)}</strong>
     <span class="note"> &middot; ${escape(doc.path)}</span>
   </div>
+  <div class="modes" role="group" aria-label="Editing mode">
+    <button id="mode-rich" type="button" class="mode">Rich</button><button id="mode-source" type="button" class="mode">Source</button>
+  </div>
   <div class="note">${where}</div>
 </header>
-<div class="split">
+<div class="split" id="split">
   <div class="pane">
     ${meta}
-    <textarea id="source" spellcheck="false"></textarea>
+    <div id="body" class="body"></div>
   </div>
   <article id="preview" class="preview"></article>
 </div>
@@ -113,9 +119,8 @@ function editorScreen(args: {
 </footer>
 <div id="result"></div>`;
 
-    const textarea = $<HTMLTextAreaElement>("source");
     const preview = $("preview");
-    textarea.value = readBody(source);
+    const host = $("body");
 
     const lookup = (path: string) => manifest.documents.find((d) => d.path === path)?.address;
 
@@ -124,12 +129,52 @@ function editorScreen(args: {
     const resolveAsset = async (repoPath: string): Promise<string | undefined> =>
         blobUrls.get(repoPath) ?? manifest.assets?.[repoPath];
 
+    /**
+     * A pasted or dropped file, prepared and remembered. Returns what to write in the
+     * document; the bytes travel separately and are committed with it (I-7).
+     */
+    const attach = async (files: File[]): Promise<string[]> => {
+        const references: string[] = [];
+        for (const file of files) {
+            const name = file.name || "pasted-image.png";
+            const refusal = checkAsset(name, file.size);
+            if (refusal) {
+                report(escape(refusal), "bad");
+                continue;
+            }
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const asset = await prepareAsset(doc.path, name, bytes);
+            // The path carries the hash, so the same image pasted twice is the same file
+            // and there is nothing to add a second time.
+            if (!pasted.some((a) => a.repoPath === asset.repoPath)) {
+                pasted.push(asset);
+                blobUrls.set(asset.repoPath, URL.createObjectURL(new Blob([bytes as BlobPart])));
+            }
+            references.push(asset.reference);
+        }
+        return references;
+    };
+
+    // A reference is relative to the document; the blob map is keyed by repository path.
+    const assetUrlFor = (reference: string): string | undefined => {
+        const directory = doc.path.replace(/\/[^/]*$/, "");
+        const repoPath = reference.replace(/^\.\//, `${directory}/`);
+        return blobUrls.get(repoPath) ?? manifest.assets?.[repoPath];
+    };
+
+    let mode: "rich" | "source" = localStorage.getItem(MODE_KEY) === "source" ? "source" : "rich";
+    let rich: RichEditor | undefined;
+    let textarea: HTMLTextAreaElement | undefined;
+
+    const currentBody = (): string => (rich ? rich.getMarkdown() : (textarea?.value ?? ""));
+
     let pending = 0;
     const refresh = async () => {
+        if (mode !== "source") return;
         const mine = ++pending;
         const html = await renderMarkdown(
             { kind: doc.kind, address: doc.address, id: doc.id, idDerived: false, path: doc.path, spaceKey: doc.spaceKey, frontmatter: {} },
-            textarea.value,
+            currentBody(),
             lookup,
             manifest.base,
             resolveAsset,
@@ -137,43 +182,53 @@ function editorScreen(args: {
         if (mine === pending) preview.innerHTML = html;
     };
 
-    textarea.addEventListener("input", () => void refresh());
-    void refresh();
+    const mount = (next: "rich" | "source", body: string) => {
+        rich?.destroy();
+        rich = undefined;
+        textarea = undefined;
+        host.replaceChildren();
+        mode = next;
+        localStorage.setItem(MODE_KEY, next);
+        $("split").dataset.mode = next;
+        $("mode-rich").classList.toggle("on", next === "rich");
+        $("mode-source").classList.toggle("on", next === "source");
 
-    /** Put text where the cursor is, and leave the cursor after it. */
-    const insert = (text: string) => {
-        const { selectionStart: from, selectionEnd: to, value } = textarea;
-        textarea.value = value.slice(0, from) + text + value.slice(to);
-        textarea.selectionStart = textarea.selectionEnd = from + text.length;
+        if (next === "rich") {
+            rich = mountRichEditor(host, body, { resolveAsset: assetUrlFor, onFiles: attach });
+            return;
+        }
+
+        const area = document.createElement("textarea");
+        area.id = "source";
+        area.spellcheck = false;
+        area.value = body;
+        host.appendChild(area);
+        textarea = area;
+        area.addEventListener("input", () => void refresh());
+        area.addEventListener("paste", (event) => {
+            const files = [...((event as ClipboardEvent).clipboardData?.files ?? [])];
+            // Pasting text is the normal case and must keep behaving exactly as it did.
+            if (files.length === 0) return;
+            event.preventDefault();
+            void attach(files).then((references) => {
+                for (const reference of references) {
+                    const alt = reference.replace(/^.*\//, "").replace(/\.[^.]+$/, "");
+                    const text = `![${alt}](${reference})`;
+                    const { selectionStart: from, selectionEnd: to, value } = area;
+                    area.value = value.slice(0, from) + text + value.slice(to);
+                    area.selectionStart = area.selectionEnd = from + text.length;
+                }
+                void refresh();
+            });
+        });
         void refresh();
     };
 
-    textarea.addEventListener("paste", (event) => {
-        const files = [...((event as ClipboardEvent).clipboardData?.files ?? [])];
-        // Pasting text is the normal case and must keep behaving exactly as it did.
-        if (files.length === 0) return;
-        event.preventDefault();
-
-        void (async () => {
-            for (const file of files) {
-                const refusal = checkAsset(file.name || "pasted-image.png", file.size);
-                if (refusal) {
-                    report(escape(refusal), "bad");
-                    continue;
-                }
-                const name = file.name || "pasted-image.png";
-                const bytes = new Uint8Array(await file.arrayBuffer());
-                const asset = await prepareAsset(doc.path, name, bytes);
-                // The path carries the hash, so the same image pasted twice is the same
-                // file and there is nothing to add a second time.
-                if (!pasted.some((a) => a.repoPath === asset.repoPath)) {
-                    pasted.push(asset);
-                    blobUrls.set(asset.repoPath, URL.createObjectURL(new Blob([bytes as BlobPart])));
-                }
-                insert(markdownFor(asset, name));
-            }
-        })();
-    });
+    // Switching carries the text across rather than re-reading the file, so a change made
+    // in one surface is never lost by looking at it in the other.
+    $("mode-rich").addEventListener("click", () => mode !== "rich" && mount("rich", currentBody()));
+    $("mode-source").addEventListener("click", () => mode !== "source" && mount("source", currentBody()));
+    mount(mode, readBody(source));
 
     const readFields = (): Record<string, string> =>
         Object.fromEntries(schema.map((f: Field) => [f.key, $<HTMLInputElement>(`f-${f.key}`)?.value ?? ""]));
@@ -201,7 +256,7 @@ function editorScreen(args: {
     $("submit").addEventListener("click", async () => {
         const button = $<HTMLButtonElement>("submit");
         const values = plan.kind === "fields" ? valuesFrom(schema, readFields()) : {};
-        const next = assemble(source, values, textarea.value);
+        const next = assemble(source, values, currentBody());
 
         // W-2. The same check exists behind submitEdit, but only after two round trips to
         // GitHub; saying so here costs nothing and explains itself better.
@@ -213,7 +268,7 @@ function editorScreen(args: {
         button.disabled = true;
         button.textContent = "Proposing…";
         try {
-            await args.onSubmit(next, $<HTMLInputElement>("summary").value, referenced(pasted, textarea.value));
+            await args.onSubmit(next, $<HTMLInputElement>("summary").value, referenced(pasted, currentBody()));
         } finally {
             button.disabled = false;
             button.textContent = "Propose change";

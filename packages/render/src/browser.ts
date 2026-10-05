@@ -9,7 +9,7 @@
 
 export { assetOutputPath, hash8, looksLikeAsset, MAX_ASSET_BYTES } from "./assets.ts";
 export { normalizeBase, withBase } from "./base.ts";
-export { renderMarkdown, stripFrontmatter } from "./markdown.ts";
+export { parseMarkdown, renderMarkdown, stripFrontmatter } from "./markdown.ts";
 export type { AddressLookup, AssetResolver } from "./markdown.ts";
 export type {
     ManifestAuth,

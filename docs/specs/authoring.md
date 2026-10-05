@@ -5,6 +5,10 @@ title: Authoring
 status: draft
 owner: "@PasserBo"
 governs:
+  - apps/web/src/rich/schema.ts
+  - apps/web/src/rich/parse.ts
+  - apps/web/src/rich/serialize.ts
+  - apps/web/src/rich/chrome.ts
   - packages/core/src/frontmatter.ts
   - packages/core/src/schema.ts
   - packages/core/src/browser.ts
@@ -76,14 +80,37 @@ fallback below is a first-class path rather than an error state.
   nothing; the constraint holds because each package offers the browser its own entry and
   the import graph is checked.
 
+### The rich surface
+
+- **W-10** — A block the author did not edit is written back as the bytes it was read as.
+  It is not re-serialised and then compared; it is never serialised at all.
+- **W-11** — A construct the editor cannot model is held as its own source text, shown as
+  itself, and written back unchanged. Raw HTML, an unfamiliar fence and whatever Markdown
+  grows next are all the same case.
+- **W-12** — The rich surface offers nothing Markdown cannot express. A control that would
+  produce a document the format cannot hold does not exist rather than failing on save.
+- **W-13** — Both surfaces edit one document. Switching between them carries the text
+  across, so a change made in either is never lost by looking at it in the other.
+
 ## Open questions
 
-**The body is still a textarea.** W-1 is enforced for frontmatter, where the unit is a
-key and the guard is cheap. The body has no equivalent yet: it is submitted whole, so an
-editor that rewrites prose would satisfy nothing above. A rich editing surface is the
-point of the next step, and it inherits W-1 as a constraint rather than an aspiration —
-which means a corpus round-trip test, and a decision to hold frontmatter, raw HTML and
-unknown fenced blocks verbatim rather than re-serialising them.
+**The rich surface works by never serialising most of the document.** W-10 is kept by
+ProseMirror's documents being persistent: an untouched block is the same object after any
+number of edits, so a map built while parsing still answers for it, and whatever it
+answers for is quoted from the source. The alternative — a serializer careful enough to
+reproduce the author's spelling of every construct — is not reachable, because Markdown
+has many spellings of the same tree and only the author knows which they meant.
+
+What this does not cover is a block that *was* edited. Its bytes are regenerated, and the
+formatter's preferences apply to it: bullets become `-`, fences become backticks. Those
+were chosen to match what this repository already contains, so an edited block does not
+stand out. Hard-wrapped prose survives, because remark keeps the line breaks inside the
+text, but that is a property of the parser rather than a promise.
+
+**Pasted text that looks like Markdown is escaped, and it looks alarming.** A paragraph
+whose text begins `- ` is written `\- `, because not escaping it would make the next read
+of the file see a list. It is correct and it reads as damage. Nothing warns the author
+that this is what their paste became.
 
 **The schema is built in, not declared.** `SPEC_SCHEMA` is GitSpec's own format, hard
 coded. An adopter with their own document types has no way to describe them, so they get
@@ -106,12 +133,11 @@ Tree shaking is why this had not happened before, and why it could not keep not
 happening: it removes unused functions, not work done at the top of a module. The
 separate browser entries are the fix, and the import-graph test is what keeps them honest.
 
-**The editor bundle now carries a YAML parser.** Reading values into a form needs one,
-and it added about a hundred kilobytes to a bundle that was already large. The weight
-falls only on someone who clicked Edit — the published pages are static HTML and load
-none of it — but the page has a visible pause before it appears, and a rich editing
-surface will add more. Splitting the bundle so the text arrives before the rest is the
-obvious answer and has not been done.
+**The editor bundle is now 750 kB.** A YAML parser to read the form, a Markdown parser
+and writer, and ProseMirror with tables. The weight falls only on someone who clicked
+Edit — published pages are static HTML and load none of it — but the page has a visible
+pause before it appears, and nothing is lazy. Loading the source textarea first and the
+rich surface after would cost one `import()` and has not been done.
 
 Writing a smaller parser is not the answer: W-7's guard works by comparing the line scan
 against a real parser, and two agreeing implementations is the entire safety property.

@@ -9,6 +9,23 @@
   "dependencies": {
     "@gitspec/core": "workspace:*",
     "@gitspec/github": "workspace:*",
-    "@gitspec/render": "workspace:*"
+    "@gitspec/render": "workspace:*",
+    "mdast-util-gfm-strikethrough": "^2.0.1",
+    "mdast-util-gfm-table": "^2.0.0",
+    "mdast-util-to-markdown": "^2.2.0",
+    "prosemirror-commands": "^1.7.2",
+    "prosemirror-dropcursor": "^1.8.4",
+    "prosemirror-gapcursor": "^1.4.1",
+    "prosemirror-history": "^1.5.1",
+    "prosemirror-inputrules": "^1.5.1",
+    "prosemirror-keymap": "^1.2.3",
+    "prosemirror-model": "^1.25.12",
+    "prosemirror-schema-list": "^1.5.1",
+    "prosemirror-state": "^1.4.4",
+    "prosemirror-tables": "^1.8.5",
+    "prosemirror-view": "^1.42.6"
+  },
+  "devDependencies": {
+    "@types/mdast": "^4.0.4"
   }
 }
