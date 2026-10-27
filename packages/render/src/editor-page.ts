@@ -198,6 +198,24 @@ li.ProseMirror-selectednode { outline:none; }
 
 @media (max-width:860px) { .rich { padding:22px 16px 40vh 40px; } }
 
+/* Findings the fields cannot show: a missing section, a bullet with no identifier. */
+.doc-issues { list-style:none; margin:0; padding:2px 16px 14px; display:flex; flex-direction:column; gap:5px; }
+.doc-issues:empty { padding:0; }
+.doc-issues li { font-size:11.5px; line-height:1.45; color:#d33; }
+.doc-issues li.warning { color:var(--muted); }
+.doc-issues code {
+  font:11px/1 ui-monospace,Menlo,monospace; padding:1px 4px; border-radius:3px;
+  background:color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.new-label { display:block; font-size:12px; font-weight:600; margin-top:12px; }
+.panel select {
+  width:100%; margin:6px 0 2px; padding:7px 10px; border:1px solid var(--rule);
+  border-radius:6px; background:var(--bg); color:var(--fg); font:inherit; font-size:14px;
+}
+#new-where { min-height:1.4em; margin:10px 0 14px; font-family:ui-monospace,Menlo,monospace; font-size:12px; }
+#new-where.clash { color:#d33; }
+
 /* The generated frontmatter form. Compact by construction: nine fields above a body is
    already a lot of screen, and the body is what most edits are about. */
 /* The body is what most edits are about, so the fields never take more than a third

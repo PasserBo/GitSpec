@@ -86,6 +86,7 @@ main { padding:40px 44px 96px; min-width:0; }
 main :first-child { margin-top:0; }
 h1,h2,h3 { line-height:1.3; margin-top:2em; }
 a { color:var(--accent); }
+.edit + .edit { margin-left:14px; }
 
 /* An address for every heading and every claim. The link on a heading stays out of the
    way until someone is looking at that heading; the one on a claim is the identifier
@@ -128,10 +129,12 @@ export function renderPage(args: {
     content: string;
     base?: string;
     editHref?: string;
+    /** Where starting a document goes. Present whenever editing is. */
+    newHref?: string;
     /** F-7: when the repository says this last changed. Absent when git cannot say. */
     history?: { created?: string; updated?: string };
 }): string {
-    const { siteTitle, space, document, nav, content, base = "", editHref, history } = args;
+    const { siteTitle, space, document, nav, content, base = "", editHref, newHref, history } = args;
     const title = String(document.frontmatter.title ?? document.id);
     const status = document.frontmatter.status;
 
@@ -146,8 +149,12 @@ export function renderPage(args: {
     ].filter(Boolean);
     const meta = parts.length > 0 ? `<div class="meta">${parts.join(" &middot; ")}</div>` : "";
 
+    // Both links are the same offer — change something — so they sit together. Without
+    // the second one, someone who only ever opens the site cannot start a document at
+    // all, which was true of this product until now.
     const edit = editHref
-        ? `<a class="edit" href="${escape(editHref)}">Edit this page</a>`
+        ? `<a class="edit" href="${escape(editHref)}">Edit this page</a>` +
+          `<a class="edit" href="${escape(newHref ?? "")}">New document</a>`
         : "";
 
     return `<!doctype html>

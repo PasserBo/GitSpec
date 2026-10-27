@@ -5,6 +5,7 @@ title: Scaffolding
 status: draft
 owner: "@PasserBo"
 governs:
+  - apps/web/src/new-screen.ts
   - packages/core/src/scaffold.ts
   - packages/core/src/agents.ts
   - packages/render/src/new-cli.ts
@@ -55,6 +56,13 @@ section.
 - **G-5** — A generated skeleton contains no claim. It says what each section is for and
   leaves the statements to whoever has decided something.
 
+### Starting one from the site
+
+- **G-8** — The site and the command generate the same document, by calling the same
+  code. Neither can learn a convention the other has not.
+- **G-9** — The site says where a document will be written before writing it, and refuses
+  a name another document already holds. G-4 is not a property of the command alone.
+
 ### The instruction file
 
 - **G-6** — The instruction file agents read is generated from the same schema the checker
@@ -78,6 +86,7 @@ where the broadest convention looks, and a repository that needs another can poi
 teaches the generator to misplace the next one. The alternative — imposing a layout — is
 worse for the case this is for, which is a repository that already has documents.
 
-**Nothing creates a document from the editor yet.** The command serves an agent and a
-developer at a terminal. Someone who only ever opens the site still has no way to start a
-document, which is the half of this gap that is left.
+**Nothing renames or moves a document.** Starting one is solved; a title chosen badly in
+the first minute is permanent as far as these surfaces are concerned, because the id is
+derived from it once and an id is not supposed to move (A-2). Editing the title in the
+form changes the title and not the id, which is correct and reads as a bug.

@@ -15,5 +15,6 @@ export type {
     ManifestAuth,
     ManifestDocument,
     ManifestRepository,
+    ManifestSpace,
     SiteManifest,
 } from "./manifest.ts";

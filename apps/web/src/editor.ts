@@ -1,9 +1,18 @@
-import { loadForEdit, restRepo, submitEdit, SubmitError, type PullRef } from "@gitspec/github";
+import { loadForEdit, restRepo, submitEdit, submitFiles, SubmitError, type PullRef } from "@gitspec/github";
 import { beginSignIn, completeSignIn, currentToken, signOut } from "./auth.ts";
 import { $, escape, panel } from "./ui.ts";
 import { renderMarkdown, withBase } from "@gitspec/render/browser";
 import type { SiteManifest } from "@gitspec/render/browser";
-import { schemaFor, validateFrontmatter, type Field } from "@gitspec/core/browser";
+import { newScreen } from "./new-screen.ts";
+import {
+    checkDocument,
+    directoryFor,
+    newDocument,
+    schemaFor,
+    sortFindings,
+    withSummaryEntry,
+    type Field,
+} from "@gitspec/core/browser";
 import { assemble, fieldControl, planForm, readBody, valuesFrom } from "./form.ts";
 import { checkAsset, prepareAsset, referenced, type PendingAsset } from "./attach.ts";
 import { mountRichEditor, type RichEditor } from "./rich/index.ts";
@@ -67,6 +76,7 @@ function pasteScreen(onToken: (token: string) => void): void {
     input.focus();
 }
 
+
 function editorScreen(args: {
     manifest: SiteManifest;
     document: SiteManifest["documents"][number];
@@ -91,6 +101,7 @@ function editorScreen(args: {
             ? `<details id="meta" class="meta" open>
   <summary>Fields <span id="issues" class="note"></span></summary>
   <div id="fields">${plan.fields.map(fieldControl).join("")}</div>
+  <ul id="doc-issues" class="doc-issues"></ul>
 </details>`
             : `<p class="meta none note">No fields: ${escape(plan.reason)}. The text below is editable as it stands.</p>`;
 
@@ -194,7 +205,11 @@ function editorScreen(args: {
         $("mode-source").classList.toggle("on", next === "source");
 
         if (next === "rich") {
-            rich = mountRichEditor(host, body, { resolveAsset: assetUrlFor, onFiles: attach });
+            rich = mountRichEditor(host, body, {
+                resolveAsset: assetUrlFor,
+                onFiles: attach,
+                onChange: revalidateSoon,
+            });
             return;
         }
 
@@ -204,7 +219,10 @@ function editorScreen(args: {
         area.value = body;
         host.appendChild(area);
         textarea = area;
-        area.addEventListener("input", () => void refresh());
+        area.addEventListener("input", () => {
+            void refresh();
+            revalidateSoon();
+        });
         area.addEventListener("paste", (event) => {
             const files = [...((event as ClipboardEvent).clipboardData?.files ?? [])];
             // Pasting text is the normal case and must keep behaving exactly as it did.
@@ -228,30 +246,66 @@ function editorScreen(args: {
     // in one surface is never lost by looking at it in the other.
     $("mode-rich").addEventListener("click", () => mode !== "rich" && mount("rich", currentBody()));
     $("mode-source").addEventListener("click", () => mode !== "source" && mount("source", currentBody()));
-    mount(mode, readBody(source));
-
     const readFields = (): Record<string, string> =>
         Object.fromEntries(schema.map((f: Field) => [f.key, $<HTMLInputElement>(`f-${f.key}`)?.value ?? ""]));
 
     // W-6: every problem at once. Fixing one field must not reveal the next.
+    /**
+     * The same rules `gitspec check` runs, while someone is typing.
+     *
+     * Until now this validated frontmatter and nothing else, so a person editing a claim
+     * by hand got less help than an agent writing the same claim from a shell — which is
+     * the wrong way round for the surface that exists to lower the barrier. V-9 says the
+     * command, the workflow and the editor share one definition of the rules; this is
+     * the editor keeping its half of that.
+     */
     const revalidate = () => {
-        if (plan.kind !== "fields") return;
-        const issues = validateFrontmatter(schema, valuesFrom(schema, readFields()));
-        for (const field of schema) {
-            const box = document.querySelector(`.field[data-key="${field.key}"] .issue`);
-            const mine = issues.find((i) => i.key === field.key);
-            // W-5: the rule, not just the complaint, so it can be looked up.
-            if (box) box.textContent = mine ? `${mine.rule}: ${mine.message.replace(/`/g, "")}` : "";
+        const values = plan.kind === "fields" ? valuesFrom(schema, readFields()) : {};
+        const findings = sortFindings(checkDocument(doc.path, assemble(source, values, currentBody()), doc.kind));
+
+        if (plan.kind === "fields") {
+            for (const field of schema) {
+                const box = document.querySelector(`.field[data-key="${field.key}"] .issue`);
+                const mine = findings.find((f) => f.key === field.key);
+                // W-5: the rule, not just the complaint, so it can be looked up.
+                if (box) box.textContent = mine ? `${mine.rule}: ${plain(mine.message)}` : "";
+            }
         }
-        const unknown = issues.filter((i) => !schema.some((f) => f.key === i.key));
-        $("issues").textContent = issues.length === 0 ? "" : `${issues.length} to fix${unknown.length ? ` (${unknown.map((i) => i.key).join(", ")} not in the format)` : ""}`;
+
+        // Everything a field cannot show: a missing section, a bullet with no identifier,
+        // a reused one. Each carries its line, because the body is where it gets fixed.
+        const rest = findings.filter((f) => !f.key || plan.kind !== "fields");
+        $("doc-issues").innerHTML = rest
+            .map(
+                (f) =>
+                    `<li class="${f.severity}"><code>${escape(f.rule)}</code>` +
+                    `${f.line ? `<span class="note"> line ${f.line}</span>` : ""} ${escape(plain(f.message))}</li>`,
+            )
+            .join("");
+
+        const errors = findings.filter((f) => f.severity === "error").length;
+        $("issues").textContent =
+            findings.length === 0
+                ? ""
+                : `${errors} to fix${findings.length > errors ? `, ${findings.length - errors} to look at` : ""}`;
+    };
+
+    let pendingCheck: ReturnType<typeof setTimeout> | undefined;
+    const revalidateSoon = () => {
+        clearTimeout(pendingCheck);
+        // Serialising the whole body on every keystroke is wasted work, and a pause is
+        // when someone is ready to be told something anyway.
+        pendingCheck = setTimeout(revalidate, 400);
     };
 
     if (plan.kind === "fields") {
         $("fields").addEventListener("input", revalidate);
         $("fields").addEventListener("change", revalidate);
-        revalidate();
     }
+
+    // Last, because the rich editor is handed `revalidateSoon` as it mounts.
+    mount(mode, readBody(source));
+    revalidate();
 
     $("submit").addEventListener("click", async () => {
         const button = $<HTMLButtonElement>("submit");
@@ -276,14 +330,20 @@ function editorScreen(args: {
     });
 }
 
+/** A rule's message without its backticks, which read as noise outside Markdown. */
+function plain(message: string): string {
+    return message.replace(/`/g, "");
+}
+
 function report(html: string, kind: "ok" | "bad"): void {
     $("result").innerHTML = `<div class="result ${kind}">${html}</div>`;
 }
 
-function signInScreen(auth: { clientId: string; broker: string }, docId: string): void {
+/** `returnTo` is the query to come back to, so signing in does not lose what was asked for. */
+function signInScreen(auth: { clientId: string; broker: string }, returnTo: string, heading: string): void {
     $("app").innerHTML = `
 <div class="panel">
-  <h1>Sign in to edit</h1>
+  <h1>${escape(heading)}</h1>
   <p class="note">
     GitSpec commits as you, so an edit carries your name and goes through review like
     any other change. It can only reach repositories this app is installed on, and only
@@ -291,7 +351,7 @@ function signInScreen(auth: { clientId: string; broker: string }, docId: string)
   </p>
   <button id="signin" class="primary">Sign in with GitHub</button>
 </div>`;
-    $("signin").addEventListener("click", () => beginSignIn(auth, `?doc=${encodeURIComponent(docId)}`));
+    $("signin").addEventListener("click", () => beginSignIn(auth, returnTo));
 }
 
 async function main(): Promise<void> {
@@ -308,10 +368,12 @@ async function main(): Promise<void> {
         }
     }
 
-    const id = new URLSearchParams(location.search).get("doc");
+    const query = new URLSearchParams(location.search);
+    const id = query.get("doc");
+    const creating = query.has("new");
     const doc = manifest.documents.find((d) => d.id === id);
 
-    if (!doc) {
+    if (!creating && !doc) {
         panel("Nothing to edit", `No document with id "${id ?? ""}" is part of this site.`);
         return;
     }
@@ -327,9 +389,59 @@ async function main(): Promise<void> {
         const repository = manifest.repository!;
         const repo = restRepo({ owner: repository.owner, repo: repository.name, token });
 
+        if (creating) {
+            newScreen({
+                manifest,
+                onCreate: async (space, title, kind) => {
+                    try {
+                        const document = newDocument({
+                            title,
+                            kind,
+                            directory: directoryFor(
+                                kind,
+                                space.directory ?? space.path,
+                                manifest.documents.map((d) => ({ path: d.path, kind: d.kind })),
+                            ),
+                        });
+
+                        // N-6: the navigation entry travels with the document, in the same
+                        // pull request, where review can see both.
+                        const files = [{ path: document.path, contents: document.contents }];
+                        if (space.summaryPath) {
+                            const summary = await repo.getFile(space.summaryPath, repository.branch);
+                            const next =
+                                summary && withSummaryEntry(space.summaryPath, summary.text, document);
+                            if (next) files.push({ path: space.summaryPath, contents: next });
+                        }
+
+                        const result = await submitFiles(repo, {
+                            branchId: document.id,
+                            files,
+                            base: repository.branch,
+                            title: `docs: add ${document.title}`,
+                            body:
+                                `Started in GitSpec. The document is generated from the format's own schema, ` +
+                                `so it passes \`gitspec check\` as written.\n\n` +
+                                `Merging this pull request is what adds it to the site.`,
+                        });
+                        report(
+                            `${result.created ? "Opened" : "Added to"} <a href="${escape(result.pull.url)}" target="_blank" rel="noopener">pull request #${result.pull.number}</a> ` +
+                                `with ${result.written.map((p) => `<code>${escape(p)}</code>`).join(" and ")}. ` +
+                                `It becomes part of the site when it is merged.`,
+                            "ok",
+                        );
+                    } catch (error) {
+                        const message = error instanceof SubmitError ? error.message : String(error);
+                        report(escape(message), "bad");
+                    }
+                },
+            });
+            return;
+        }
+
         let loaded;
         try {
-            loaded = await loadForEdit(repo, { documentId: doc.id, path: doc.path, base: repository.branch });
+            loaded = await loadForEdit(repo, { documentId: doc!.id, path: doc!.path, base: repository.branch });
         } catch (error) {
             // A rejected token is the overwhelmingly likely cause, and leaving it in
             // storage would lock the editor into a loop it cannot explain.
@@ -341,18 +453,18 @@ async function main(): Promise<void> {
 
         editorScreen({
             manifest,
-            document: doc,
+            document: doc!,
             source: loaded.contents,
             ref: loaded.ref,
             pull: loaded.pull,
             onSubmit: async (contents, summary, attachments) => {
                 try {
                     const result = await submitEdit(repo, {
-                        documentId: doc.id,
-                        path: doc.path,
+                        documentId: doc!.id,
+                        path: doc!.path,
                         contents,
                         base: repository.branch,
-                        title: doc.title,
+                        title: doc!.title,
                         summary,
                         // I-3: the image and the paragraph referring to it ride one branch.
                         attachments: attachments.map((a) => ({ path: a.repoPath, contents: a.bytes })),
@@ -373,7 +485,7 @@ async function main(): Promise<void> {
     if (manifest.auth) {
         const token = await currentToken(manifest.auth);
         if (token) await start(token);
-        else signInScreen(manifest.auth, doc.id);
+        else signInScreen(manifest.auth, creating ? "?new=1" : `?doc=${encodeURIComponent(doc!.id)}`, creating ? "Sign in to start a document" : "Sign in to edit");
         return;
     }
 

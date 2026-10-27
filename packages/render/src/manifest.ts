@@ -38,8 +38,24 @@ export interface ManifestAuth {
     appSlug?: string;
 }
 
+export interface ManifestSpace {
+    key: string;
+    title: string;
+    /** Site-relative path the space is mounted at. */
+    path: string;
+    /** Repository-root-relative directory, when the space declares one. */
+    directory?: string;
+    /** Repository-root-relative navigation file, when the space has one. */
+    summaryPath?: string;
+}
+
 export interface SiteManifest {
     base: string;
+    /**
+     * Where documents live. Here so the editor can work out where a new one belongs and
+     * which navigation file its entry goes in, without guessing from existing paths.
+     */
+    spaces: ManifestSpace[];
     /**
      * Repository path to the URL the built site serves it from. Present so the editor's
      * preview can show an image that is already committed without recomputing how the
@@ -67,11 +83,15 @@ export function buildManifest(args: {
     repository?: ManifestRepository;
     auth?: ManifestAuth;
     assets?: Record<string, string>;
+    spaces?: ManifestSpace[];
     /** Claims by repository path, read while the documents were. */
     claims?: Map<string, Claim[]>;
 }): SiteManifest {
     return {
         base: args.base,
+        spaces:
+            args.spaces ??
+            args.discovery.spaces.map((space) => ({ key: space.key, title: space.title, path: space.path })),
         assets: args.assets,
         repository: args.repository,
         auth: args.auth,

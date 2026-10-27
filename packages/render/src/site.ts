@@ -5,6 +5,7 @@ import { normalizeBase } from "./base.ts";
 import { appPage, editorPage } from "./editor-page.ts";
 import { buildNav, renderPage } from "./layout.ts";
 import { buildManifest, type ManifestAuth, type ManifestRepository } from "./manifest.ts";
+import { summaryPathFor } from "@gitspec/core";
 import { renderMarkdown, stripFrontmatter, type AssetResolver } from "./markdown.ts";
 import { assetOutputPath, hash8, looksLikeAsset, MAX_ASSET_BYTES } from "./assets.ts";
 import { readHistory } from "./history.ts";
@@ -123,6 +124,7 @@ export async function renderSite(
                     editHref: editable
                         ? `${base}/_edit/?doc=${encodeURIComponent(document.id)}`
                         : undefined,
+                    newHref: editable ? `${base}/_edit/?new=1` : undefined,
                     history: history.get(document.path),
                 }),
             });
@@ -143,6 +145,20 @@ export async function renderSite(
                     repository: options.repository,
                     auth: options.auth,
                     claims,
+                    spaces: discovery.spaces.map((space) => {
+                        const configured = config.spaces.find((s) => s.key === space.key);
+                        return {
+                            key: space.key,
+                            title: space.title,
+                            path: space.path,
+                            ...(configured?.directory
+                                ? { directory: configured.directory.replace(/^\.\//, "").replace(/\/$/, "") }
+                                : {}),
+                            ...(configured && summaryPathFor(configured)
+                                ? { summaryPath: summaryPathFor(configured) }
+                                : {}),
+                        };
+                    }),
                     // So the editor's preview can show an image that is already committed,
                     // without knowing how the build addressed it.
                     assets: Object.fromEntries(
