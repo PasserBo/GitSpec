@@ -6,6 +6,7 @@ import remarkParse from "remark-parse";
 import remarkRehype from "remark-rehype";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
+import type { Root } from "mdast";
 import type { Document } from "@gitspec/core";
 import { withBase } from "./base.ts";
 
@@ -115,6 +116,18 @@ export async function renderMarkdown(
         .process(source);
 
     return String(file);
+}
+
+/**
+ * The document as a syntax tree, with every node carrying its offsets in the source.
+ *
+ * Those offsets are what lets the rich editor rebuild a file from the blocks the author
+ * actually touched and the original bytes of the ones they did not (W-10). Same parser as
+ * the renderer, so the editor can never disagree with the page about what a document
+ * says.
+ */
+export function parseMarkdown(source: string): Root {
+    return unified().use(remarkParse).use(remarkGfm).parse(source);
 }
 
 /** Strip the frontmatter block before rendering; it is metadata, not content. */
