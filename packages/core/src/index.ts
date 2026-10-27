@@ -12,6 +12,10 @@ export {
 export type { FrontmatterBlock, FrontmatterValue, Located } from "./frontmatter.ts";
 export { PAGE_SCHEMA, SPEC_SCHEMA, schemaFor, validateFrontmatter } from "./schema.ts";
 export type { Field, FieldType, Issue } from "./schema.ts";
+export { agentsMarkdown } from "./agents.ts";
+export type { AgentsInput } from "./agents.ts";
+export { directoryFor, newDocument, withSummaryEntry } from "./scaffold.ts";
+export type { NewDocument, NewDocumentInput } from "./scaffold.ts";
 export { checkDocument, checkRepository, sortFindings } from "./check.ts";
 export type { Finding, RepositoryCheck } from "./check.ts";
 export { discover } from "./discover.ts";

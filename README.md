@@ -16,6 +16,25 @@ once (Settings → Pages → Source: GitHub Actions). The manual steps in
 [`examples/docs.yml`](examples/docs.yml) remain the fallback; they are what setup does
 for you.
 
+## Starting a document
+
+```bash
+bun run new "Caching strategy"
+```
+
+Writes a document that already passes the checker and adds its line to the navigation
+file — in the directory this repository already keeps that kind of document in, rather
+than one this tool picked. `--dry-run` shows what it would write; `--json` reports the
+path and id for a program to act on.
+
+[`AGENTS.md`](AGENTS.md) tells an agent that both commands exist, along with the document
+rules. It is generated from the same schema the checker enforces, so it cannot describe a
+rule that is no longer the rule:
+
+```bash
+bun run agents
+```
+
 ## Checking documents
 
 ```bash

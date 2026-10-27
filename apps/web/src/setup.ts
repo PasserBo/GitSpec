@@ -172,10 +172,11 @@ async function main(): Promise<void> {
 
         let facts: RepoFacts;
         try {
-            const [config, docsDir, docsReadme] = await Promise.all([
+            const [config, docsDir, docsReadme, agentsMd] = await Promise.all([
                 repo.getFile("gitspec.yaml", picked.defaultBranch),
                 repo.listDirectory("docs", picked.defaultBranch),
                 repo.getFile("docs/README.md", picked.defaultBranch),
+                repo.getFile("AGENTS.md", picked.defaultBranch),
             ]);
             facts = {
                 owner: picked.owner,
@@ -184,6 +185,7 @@ async function main(): Promise<void> {
                 hasGitspecYaml: Boolean(config),
                 hasDocsDir: Boolean(docsDir),
                 hasDocsReadme: Boolean(docsReadme),
+                hasAgentsMd: Boolean(agentsMd),
             };
         } catch (error) {
             panel("Could not read the repository", String(error), true);

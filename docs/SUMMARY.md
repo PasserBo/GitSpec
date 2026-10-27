@@ -12,4 +12,5 @@
 * [Authoring](specs/authoring.md)
 * [Assets](specs/assets.md)
 * [Validation](specs/validation.md)
+* [Scaffolding](specs/scaffolding.md)
 * [Drift detection](specs/drift-detection.md)
