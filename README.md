@@ -16,6 +16,22 @@ once (Settings → Pages → Source: GitHub Actions). The manual steps in
 [`examples/docs.yml`](examples/docs.yml) remain the fallback; they are what setup does
 for you.
 
+## Checking documents
+
+```bash
+bun run check          # or: bun packages/render/src/check-cli.ts --root .
+```
+
+Reports what a document gets wrong — a missing frontmatter key, a section the format does
+not allow, a claim with no identifier, a reused one, a link to nothing — each naming the
+rule it comes from and the line it is on. `--json` emits the same findings in a stable
+shape, which is the form an agent reads.
+
+It runs in three places from one definition: this command, the workflow, and the Action,
+which writes its findings to the job summary without ever failing a build. What a finding
+should stop is the repository's own decision, made through branch protection. The rules
+are in [Validation](docs/specs/validation.md).
+
 ## Layout
 
 This is a monorepo with two areas, kept apart so the product never has privileged

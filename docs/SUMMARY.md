@@ -11,4 +11,5 @@
 * [Onboarding](specs/onboarding.md)
 * [Authoring](specs/authoring.md)
 * [Assets](specs/assets.md)
+* [Validation](specs/validation.md)
 * [Drift detection](specs/drift-detection.md)

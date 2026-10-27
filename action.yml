@@ -56,6 +56,26 @@ runs:
       working-directory: ${{ github.action_path }}
       run: bun install --frozen-lockfile
 
+    # Every adopter gets the format checked without changing their workflow, and it
+    # never fails the build: V-3 leaves "what a finding should stop" to the repository,
+    # through branch protection rather than through this. A repository GitSpec did not
+    # write reports nothing at all, because F-6 makes every document a `page` until it
+    # says otherwise and V-4 exempts a page from every structural rule.
+    - name: Check the documents
+      shell: bash
+      run: |
+        bun "${{ github.action_path }}/packages/render/src/check-cli.ts" \
+          --root "${{ inputs.root }}" \
+          --config "${{ inputs.config }}" > "${RUNNER_TEMP}/gitspec-check.txt" || true
+        cat "${RUNNER_TEMP}/gitspec-check.txt"
+        {
+          echo "### GitSpec"
+          echo ""
+          echo '```'
+          cat "${RUNNER_TEMP}/gitspec-check.txt"
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"
+
     - name: Build the site
       shell: bash
       run: |
