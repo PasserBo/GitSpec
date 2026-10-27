@@ -89,6 +89,11 @@ edit the same document, they are working on one pull request, and git handles th
 - **R-6** — A file GitSpec cannot read faithfully is refused, naming the reason. It is
   never presented as empty, because an empty document offered for editing is a deletion
   the author did not ask for.
+- **R-7** — Every heading and every identified claim in a rendered document has a stable
+  address. A claim's address is its identifier, which C-2 already promises never moves,
+  so a link to one outlives every edit that does not withdraw it.
+- **R-8** — The site publishes what each document claims, as data. Finding out what a
+  repository asserts does not require parsing its Markdown.
 
 ## Open questions
 
@@ -107,6 +112,12 @@ signed-in user, which means a user without write access cannot edit at all, even
 the fork-and-pull-request path would normally let them. Whether to support that path is
 open, and it interacts with R-2, since previews of fork branches are the case GitBook
 disables for security.
+
+**Statement-level addressing has nowhere to be used yet.** R-7 and R-8 make every claim
+linkable and listable, which is the property this format paid for by making authors
+identify their claims and which no page-level tool can offer. Nothing consumes it:
+review comments are still written by hand, and drift detection — the one thing that
+would judge claims one at a time — does not exist.
 
 **Assets.** Settled in [Assets](assets.md): they are discovered by reference, addressed
 by content, and committed to the branch of the document that refers to them (I-7). What

@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Config, DiscoveryResult } from "@gitspec/core";
+import { claimsIn, type Claim, type Config, type DiscoveryResult } from "@gitspec/core";
 import { normalizeBase } from "./base.ts";
 import { appPage, editorPage } from "./editor-page.ts";
 import { buildNav, renderPage } from "./layout.ts";
@@ -97,10 +97,13 @@ export async function renderSite(
             return withBase(base, `/${outputPath}`);
         };
 
+    const claims = new Map<string, Claim[]>();
+
     const files: RenderedFile[] = [];
     for (const space of discovery.spaces) {
         for (const document of space.documents) {
             const source = await readFile(join(root, document.path), "utf8");
+            if (document.kind === "spec") claims.set(document.path, claimsIn(source));
             const content = await renderMarkdown(
                 document,
                 stripFrontmatter(source),
@@ -139,6 +142,7 @@ export async function renderSite(
                     base,
                     repository: options.repository,
                     auth: options.auth,
+                    claims,
                     // So the editor's preview can show an image that is already committed,
                     // without knowing how the build addressed it.
                     assets: Object.fromEntries(

@@ -86,6 +86,28 @@ main { padding:40px 44px 96px; min-width:0; }
 main :first-child { margin-top:0; }
 h1,h2,h3 { line-height:1.3; margin-top:2em; }
 a { color:var(--accent); }
+
+/* An address for every heading and every claim. The link on a heading stays out of the
+   way until someone is looking at that heading; the one on a claim is the identifier
+   itself, because the thing a reader would quote should be the thing they can click. */
+h1, h2, h3, h4, h5, h6 { scroll-margin-top:18px; }
+a.anchor {
+  margin-left:.4em; color:var(--muted); text-decoration:none; font-weight:400;
+  opacity:0; transition:opacity .12s;
+}
+h1:hover > a.anchor, h2:hover > a.anchor, h3:hover > a.anchor,
+h4:hover > a.anchor, h5:hover > a.anchor, h6:hover > a.anchor,
+a.anchor:focus { opacity:1; }
+a.claim-anchor { color:inherit; text-decoration:none; }
+a.claim-anchor:hover { text-decoration:underline; text-decoration-style:dotted; }
+li.claim { scroll-margin-top:18px; }
+
+/* Landing on #F-3 should make it obvious which one F-3 is. */
+li.claim:target, h1:target, h2:target, h3:target, h4:target, h5:target, h6:target {
+  background:color-mix(in srgb, var(--accent) 15%, transparent);
+  border-radius:5px;
+  box-shadow:0 0 0 6px color-mix(in srgb, var(--accent) 15%, transparent);
+}
 code { background:var(--code); padding:.15em .35em; border-radius:4px; font-size:.9em; }
 pre { background:var(--code); padding:14px 16px; border-radius:8px; overflow:auto; }
 pre code { background:none; padding:0; }

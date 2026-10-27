@@ -25,6 +25,6 @@ export type { FrontmatterBlock, FrontmatterValue, Located } from "./frontmatter.
 export { PAGE_SCHEMA, SPEC_SCHEMA, schemaFor, validateFrontmatter } from "./schema.ts";
 export { agentsMarkdown } from "./agents.ts";
 export type { AgentsInput } from "./agents.ts";
-export { checkDocument, sortFindings } from "./check.ts";
-export type { Finding } from "./check.ts";
+export { checkDocument, claimsIn, sortFindings } from "./check.ts";
+export type { Claim, Finding } from "./check.ts";
 export type { Field, FieldType, Issue } from "./schema.ts";
