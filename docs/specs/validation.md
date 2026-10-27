@@ -7,6 +7,7 @@ owner: "@PasserBo"
 governs:
   - packages/core/src/check.ts
   - packages/render/src/check-cli.ts
+  - apps/web/src/editor.ts
 verified_against: null
 ---
 
@@ -75,10 +76,9 @@ decision away from the repository is one an organisation has to fight rather tha
 
 ## Open questions
 
-**The editor does not run this yet.** V-9 says the three surfaces share one definition,
-and two of them do. The editor still validates only frontmatter, which means a person
-editing a claim by hand gets less help than an agent writing the same claim from a shell.
-The wiring is small and is waiting on the rich editor landing first.
+**Findings in the editor arrive on a pause, not on a keystroke.** Judging a document
+means serialising the whole body, which is wasted work between two characters of the same
+word. The delay is four hundred milliseconds and was chosen by nobody measuring anything.
 
 **Nothing checks that a claim is a claim.** C-3 says a claim states something true or
 false of the code, and C-5 says it is self-contained. Both are judgements, so neither is
