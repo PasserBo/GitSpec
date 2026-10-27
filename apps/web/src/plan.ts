@@ -3,6 +3,8 @@
  * `FileToWrite` rather than inheriting the byte case it can never produce. The result
  * page shows each file verbatim before anything is proposed, which needs a string.
  */
+import { agentsMarkdown } from "@gitspec/core/browser";
+
 type TextFile = { path: string; contents: string };
 
 /** What setup learned about a repository before deciding anything. */
@@ -13,6 +15,8 @@ export interface RepoFacts {
     hasGitspecYaml: boolean;
     hasDocsDir: boolean;
     hasDocsReadme: boolean;
+    /** Many repositories already have one, and O-2 says setup only ever adds. */
+    hasAgentsMd: boolean;
 }
 
 export interface SetupAuth {
@@ -114,6 +118,24 @@ export function planSetup(facts: RepoFacts, auth: SetupAuth, workflowTemplate: s
             facts.hasDocsDir
                 ? "docs/ exists but has no README.md, so a starter home page is added — the site needs one document to answer at its root."
                 : "There is no docs/ directory yet, so one is started with a README.md. Move your Markdown in, or change `directory` in gitspec.yaml.",
+        );
+    }
+
+    // G-6: what an agent is told is generated from the schema the checker enforces, so
+    // the two cannot describe different rules. O-2 still holds — a repository that
+    // already has one keeps it, and is told why nothing was added.
+    if (!facts.hasAgentsMd) {
+        files.push({
+            path: "AGENTS.md",
+            contents: agentsMarkdown({
+                spaces: [{ key: "docs", title: "Docs", directory: "./docs", summary: "docs/SUMMARY.md" }],
+                checkCommand: "bunx gitspec-check",
+                newCommand: "bunx gitspec-new",
+            }),
+        });
+    } else {
+        notes.push(
+            "AGENTS.md already exists, so it is left alone. Run `bunx gitspec-agents --stdout` and paste what it prints if you want the document rules in it.",
         );
     }
 

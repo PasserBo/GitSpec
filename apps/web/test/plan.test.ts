@@ -13,6 +13,7 @@ const facts = (over: Partial<RepoFacts> = {}): RepoFacts => ({
     hasGitspecYaml: false,
     hasDocsDir: false,
     hasDocsReadme: false,
+    hasAgentsMd: false,
     ...over,
 });
 
@@ -37,6 +38,7 @@ describe("O-6: the generated site builds first time", () => {
             "gitspec.yaml",
             ".github/workflows/docs.yml",
             "docs/README.md",
+            "AGENTS.md",
         ]);
         expect(plan.notes.join(" ")).toContain("no docs/ directory");
     });
@@ -49,13 +51,34 @@ describe("O-6: the generated site builds first time", () => {
 
     test("an existing docs/README.md is left alone", () => {
         const plan = propose(facts({ hasDocsDir: true, hasDocsReadme: true }));
-        expect(plan.files.map((f) => f.path)).toEqual(["gitspec.yaml", ".github/workflows/docs.yml"]);
+        expect(plan.files.map((f) => f.path)).toEqual([
+            "gitspec.yaml",
+            ".github/workflows/docs.yml",
+            "AGENTS.md",
+        ]);
         expect(plan.notes).toEqual([]);
     });
 
     test("the home page declares an id, so its address does not depend on its path", () => {
         const home = propose(facts()).files.find((f) => f.path === "docs/README.md")!;
         expect(home.contents).toMatch(/^---\nkind: page\nid: home\n/);
+    });
+});
+
+describe("G-6: setup installs the instruction file agents read", () => {
+    test("a bare repository gets one, generated from the schema", () => {
+        const agents = propose(facts()).files.find((f) => f.path === "AGENTS.md")!;
+        // The rules it states are the ones the checker enforces, not a copy of them.
+        expect(agents.contents).toContain("`verified_against`");
+        expect(agents.contents).toContain("`draft`, `active`, `superseded`");
+        expect(agents.contents).toContain("gitspec-check");
+        expect(agents.contents).toContain("gitspec-new");
+    });
+
+    test("O-2: a repository that already has one keeps it, and is told why", () => {
+        const plan = propose(facts({ hasAgentsMd: true }));
+        expect(plan.files.map((f) => f.path)).not.toContain("AGENTS.md");
+        expect(plan.notes.join(" ")).toContain("AGENTS.md already exists");
     });
 });
 

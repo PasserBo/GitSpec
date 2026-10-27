@@ -81,8 +81,12 @@ a glob. Those cases fail loudly instead.
   its documents.
 - **N-3** — A document absent from `SUMMARY.md` is still served at its address. It is
   absent from the navigation tree, not from the site.
-- **N-4** — GitSpec never writes `SUMMARY.md`. A navigation file is authored, like any
-  other document.
+- **N-4** — GitSpec never reorders or removes an entry in `SUMMARY.md`, and writes to it
+  only as N-6 allows. The order of a navigation file is a judgement its author made, and
+  regenerating it would throw that judgement away every time a document was added.
+- **N-6** — A navigation entry is written only in the same change that adds the document
+  it points at, beside the entries of that document's own directory. Never on its own,
+  and never for a document that is already listed.
 - **N-5** — A space declaring `directory` takes its navigation file from `SUMMARY.md`
   inside that directory. A space declaring `include` has no implied location and must
   name one with `summary`; without it the space has no navigation file.

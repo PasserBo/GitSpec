@@ -10,7 +10,9 @@
   },
   "bin": {
     "gitspec-render": "./src/cli.ts",
-    "gitspec-check": "./src/check-cli.ts"
+    "gitspec-check": "./src/check-cli.ts",
+    "gitspec-new": "./src/new-cli.ts",
+    "gitspec-agents": "./src/agents-cli.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
