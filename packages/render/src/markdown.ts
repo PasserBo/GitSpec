@@ -7,6 +7,7 @@ import remarkRehype from "remark-rehype";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
 import type { Document } from "@gitspec/core";
+import { anchors } from "./anchors.ts";
 import { withBase } from "./base.ts";
 
 /** Repository-root-relative path → the address that document answers at. */
@@ -110,6 +111,7 @@ export async function renderMarkdown(
         // so its links are rewritten like any other.
         .use(remarkRehype, { allowDangerousHtml: true })
         .use(rehypeRaw)
+        .use(anchors())
         .use(rewriteUrls(document.path, lookup, base, asset))
         .use(rehypeStringify, { allowDangerousHtml: true })
         .process(source);

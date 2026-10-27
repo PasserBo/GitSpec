@@ -37,6 +37,67 @@ const SECTIONS = ["Intent", "Behaviour", "Open questions"];
 const CLAIM = /^-\s+\*\*([A-Z][A-Z0-9]*-\d+)\*\*/;
 const HEADING = /^(#{1,6})\s+(.*?)\s*$/;
 
+export interface Claim {
+    /** The permanent identifier C-2 promises never moves, e.g. `F-3`. */
+    id: string;
+    /** The statement, without its identifier. */
+    text: string;
+    /** 1-indexed line in the document it was read from. */
+    line: number;
+}
+
+/**
+ * Every claim in a document's `Behaviour` section.
+ *
+ * This is the only place that decides what counts as one, because the checker and
+ * anything that lists them have to agree: a nested bullet is part of the claim above it,
+ * a bullet in a fenced example is not a claim at all, and neither is a bullet anywhere
+ * but `Behaviour` (S-2).
+ */
+export function claimsIn(source: string): Claim[] {
+    return behaviourBullets(source).filter((b): b is Claim => b.id !== undefined) as Claim[];
+}
+
+/**
+ * Every top-level bullet in `Behaviour`, identified or not.
+ *
+ * The checker wants the ones without an identifier and the index wants the ones with, so
+ * there is one scanner rather than two that would disagree about a nested bullet inside
+ * a month.
+ */
+export function behaviourBullets(source: string): { id?: string; text: string; line: number }[] {
+    const located = locateFrontmatter(source);
+    const starts = lineStarts(source);
+    const bodyLine = lineAt(starts, located.bodyStart);
+    const lines = source.slice(located.bodyStart).split("\n");
+
+    const found: { id?: string; text: string; line: number }[] = [];
+    let inBehaviour = false;
+    let fenced = false;
+
+    for (const [index, line] of lines.entries()) {
+        if (/^\s*(```|~~~)/.test(line)) fenced = !fenced;
+        if (fenced) continue;
+
+        const heading = HEADING.exec(line);
+        if (heading && heading[1]!.length === 2) {
+            inBehaviour = heading[2] === "Behaviour";
+            continue;
+        }
+        // Only a top-level bullet is a claim; a nested one is part of the claim above it.
+        if (!inBehaviour || !/^-\s+\S/.test(line)) continue;
+
+        const match = CLAIM.exec(line);
+        found.push({
+            id: match?.[1],
+            text: match ? line.slice(match[0].length).replace(/^\s*[\u2014\u2013-]\s*/, "").trim() : line.slice(2).trim(),
+            line: bodyLine + index,
+        });
+    }
+
+    return found;
+}
+
 /** A line-start offset table, so a character offset can be reported as a line. */
 function lineStarts(source: string): number[] {
     const starts = [0];
@@ -133,42 +194,27 @@ export function checkDocument(path: string, source: string, kind: DocumentKind):
 
     // ---- claims (C-1, C-2) ------------------------------------------------
 
-    const behaviour = topLevel.find((h) => h.text === "Behaviour");
-    if (!behaviour) return findings;
-    const after = topLevel[topLevel.indexOf(behaviour) + 1];
-    const from = behaviour.index + 1;
-    const to = after ? after.index : lines.length;
+    if (!topLevel.some((h) => h.text === "Behaviour")) return findings;
 
     const seen = new Map<string, number>();
-    fenced = false;
-    for (let index = from; index < to; index++) {
-        const line = lines[index]!;
-        if (/^\s*(```|~~~)/.test(line)) fenced = !fenced;
-        if (fenced) continue;
-
-        // Only a top-level bullet is a claim; a nested one is part of the claim above it.
-        if (!/^-\s+\S/.test(line)) continue;
-
-        const match = CLAIM.exec(line);
-        if (!match) {
+    for (const bullet of behaviourBullets(source)) {
+        if (!bullet.id) {
             add(
                 "C-1",
                 "every statement in `Behaviour` is a claim and carries an identifier in bold at the start of the line, as `- **PREFIX-1** — …`",
-                lineOf(index),
+                bullet.line,
             );
             continue;
         }
-
-        const id = match[1]!;
-        const earlier = seen.get(id);
+        const earlier = seen.get(bullet.id);
         if (earlier !== undefined) {
             add(
                 "C-2",
-                `\`${id}\` is already used on line ${lineOf(earlier)}; an identifier is unique within its spec and is never reused`,
-                lineOf(index),
+                `\`${bullet.id}\` is already used on line ${earlier}; an identifier is unique within its spec and is never reused`,
+                bullet.line,
             );
         } else {
-            seen.set(id, index);
+            seen.set(bullet.id, bullet.line);
         }
     }
 

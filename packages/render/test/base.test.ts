@@ -44,7 +44,11 @@ describe("renderSite with a base", () => {
     test("every internal href carries the prefix", async () => {
         const files = await render("/GitSpec");
         const home = files.find((f) => f.path === "index.html")!;
-        const hrefs = [...String(home.contents).matchAll(/href="([^"]+)"/g)].map((m) => m[1]!);
+        const hrefs = [...String(home.contents).matchAll(/href="([^"]+)"/g)]
+            .map((m) => m[1]!)
+            // A fragment names a place on the page it is already on, so there is nothing
+            // for a prefix to do to it and no way for it to leave the site.
+            .filter((href) => !href.startsWith("#"));
 
         expect(hrefs.length).toBeGreaterThan(0);
         for (const href of hrefs) {

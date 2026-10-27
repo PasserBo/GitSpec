@@ -1,4 +1,4 @@
-import type { DiscoveryResult } from "@gitspec/core";
+import type { Claim, DiscoveryResult } from "@gitspec/core";
 
 export interface ManifestDocument {
     id: string;
@@ -9,6 +9,20 @@ export interface ManifestDocument {
     address: string;
     kind: "spec" | "page";
     spaceKey: string;
+    /** F-3. Absent on a page, which has no status to have. */
+    status?: string;
+    /** F-4: the code this spec describes. */
+    governs?: string[];
+    /**
+     * Every identified statement in the document, with the address it answers at.
+     *
+     * Here so that something reading this site does not have to parse Markdown to find
+     * out what a document claims. Page-level addressing is what every documentation tool
+     * offers; this format already paid for statement-level addressing by making authors
+     * identify their claims, and publishing the index is what makes that paid-for
+     * property usable by anything other than a human reading the page.
+     */
+    claims?: { id: string; text: string; address: string }[];
 }
 
 export interface ManifestRepository {
@@ -53,6 +67,8 @@ export function buildManifest(args: {
     repository?: ManifestRepository;
     auth?: ManifestAuth;
     assets?: Record<string, string>;
+    /** Claims by repository path, read while the documents were. */
+    claims?: Map<string, Claim[]>;
 }): SiteManifest {
     return {
         base: args.base,
@@ -67,6 +83,21 @@ export function buildManifest(args: {
                 address: document.address,
                 kind: document.kind,
                 spaceKey: space.key,
+                ...(document.kind === "spec" && typeof document.frontmatter.status === "string"
+                    ? { status: document.frontmatter.status }
+                    : {}),
+                ...(Array.isArray(document.frontmatter.governs)
+                    ? { governs: document.frontmatter.governs.filter((g): g is string => typeof g === "string") }
+                    : {}),
+                ...(args.claims?.get(document.path)?.length
+                    ? {
+                          claims: args.claims.get(document.path)!.map((claim) => ({
+                              id: claim.id,
+                              text: claim.text,
+                              address: `${document.address}#${claim.id}`,
+                          })),
+                      }
+                    : {}),
             })),
         ),
     };
