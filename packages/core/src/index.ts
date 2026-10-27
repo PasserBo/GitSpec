@@ -12,6 +12,8 @@ export {
 export type { FrontmatterBlock, FrontmatterValue, Located } from "./frontmatter.ts";
 export { PAGE_SCHEMA, SPEC_SCHEMA, schemaFor, validateFrontmatter } from "./schema.ts";
 export type { Field, FieldType, Issue } from "./schema.ts";
+export { checkDocument, checkRepository, sortFindings } from "./check.ts";
+export type { Finding, RepositoryCheck } from "./check.ts";
 export { discover } from "./discover.ts";
 export type { DiscoveryResult, SpaceResult } from "./discover.ts";
 export { DiscoveryError } from "./errors.ts";

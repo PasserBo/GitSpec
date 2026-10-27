@@ -34,3 +34,7 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun test
       - run: bun run typecheck
+      # The product's own rules, on the product's own documents. It exits non-zero on an
+      # error and says nothing about a warning, which is the same verdict an author or an
+      # agent gets locally.
+      - run: bun run check

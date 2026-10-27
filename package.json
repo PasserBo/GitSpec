@@ -9,7 +9,8 @@
     "test": "bun test",
     "typecheck": "bun run --filter '*' typecheck",
     "build": "bun packages/render/src/cli.ts",
-    "preview": "bun packages/render/src/serve.ts"
+    "preview": "bun packages/render/src/serve.ts",
+    "check": "bun packages/render/src/check-cli.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",

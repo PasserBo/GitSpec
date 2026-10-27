@@ -9,7 +9,8 @@
     "./browser": "./src/browser.ts"
   },
   "bin": {
-    "gitspec-render": "./src/cli.ts"
+    "gitspec-render": "./src/cli.ts",
+    "gitspec-check": "./src/check-cli.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit"
